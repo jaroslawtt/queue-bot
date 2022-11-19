@@ -1,9 +1,13 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
-import AnswerTemplates from "./answer-templates/templates";
+import AnswerTemplates from "./src/answer-templates/templates";
 import { Queue } from "./types";
+import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
+import { getInlineKeyboard } from "./src/inline_keyboard";
 
 config({path: `.env`});
+
+let tableQueue: { [key: number] : string};
 
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
@@ -47,10 +51,7 @@ bot.on(`message`, async msg => {
        else queue.numberOfStudents = parseInt(text);
     }
     if(queue.name && queue.numberOfStudents){
-        const inlineKeyboard = [];
-        for(let i = 1; i <= queue.numberOfStudents; i++){
-            inlineKeyboard.push([{text: `${i}`, callback_data: `${i}`}]);
-        }
+        const inlineKeyboard: Array<Array<InlineKeyboardButton>> = await getInlineKeyboard(queue.numberOfStudents);
         await bot.sendMessage(msg.chat.id, `${queue.numberOfStudents}`, {
             reply_markup: {
                 inline_keyboard: inlineKeyboard,
@@ -61,10 +62,13 @@ bot.on(`message`, async msg => {
 });
 
 
-//handling choosing turn in query
+//handling choosing turn in query and cancel turn
 
 bot.on(`callback_query`, async msg => {
-    console.log(msg.data);
-})
+    const message_id  = msg?.message?.message_id;
+   /* if(msg.data && msg.data.search(/turn\//) !== -1 && message_id){
+
+    }*/
+});
 
 

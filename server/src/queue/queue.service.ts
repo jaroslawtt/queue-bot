@@ -10,10 +10,9 @@ export class QueueService {
     }
 
 
-    async createQueue({ queue_name, students_number, queue_id}: QueueCreateDto) {
+    async createQueue({ queue_name, students_number}: QueueCreateDto) {
         return await this.prisma.queue.create({
             data: {
-                queue_id,
                 queue_name,
                 students_number,
             }
@@ -28,10 +27,10 @@ export class QueueService {
         });
     };
 
-    async getQueue(queue_id: number){
+    async getQueue(queue_name: string){
         return await this.prisma.queue.findUnique({
             where: {
-                queue_id
+                queue_name,
             },
             include: {
                 users: true,

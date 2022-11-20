@@ -24,7 +24,6 @@ export class QueueController {
     }
 
     @Post(`/enqueue`)
-    @HttpCode(201)
     enqueueUser(@Body() body: UserEnqueueDto){
         return this.queueService.enqueueUser(body);
     }

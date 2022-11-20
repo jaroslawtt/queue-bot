@@ -15,6 +15,9 @@ export class QueueService {
             data: {
                 queue_name,
                 students_number,
+            },
+            include: {
+                users: true,
             }
         })
     }
@@ -38,7 +41,7 @@ export class QueueService {
         })
     };
 
-    async enqueueUser({ queue_id, user_id, username, turn }: UserEnqueueDto): Promise<void>{
+    async enqueueUser({ queue_id, user_id, username, turn }: UserEnqueueDto): Promise<any>{
         await this.prisma.usersOnQueues.create({
             data: {
                 user: {
@@ -58,6 +61,14 @@ export class QueueService {
                     }
                 },
                 turn,
+            }
+        })
+        return await this.prisma.queue.findUnique({
+            where: {
+                queue_id,
+            },
+            include: {
+                users: true,
             }
         })
     };

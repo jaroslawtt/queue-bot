@@ -82,6 +82,14 @@ export class QueueService {
                 }
             }
         })
+        return await this.prisma.queue.findUnique({
+            where: {
+                queue_id: queueId,
+            },
+            include: {
+                users: true,
+            }
+        })
     };
 
     async removeQueue({ queue_id }: QueueRemoveDto){

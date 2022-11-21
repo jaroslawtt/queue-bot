@@ -35,7 +35,6 @@ export class QueueController {
     }
 
     @Post(`/dequeue`)
-    @HttpCode(201)
     @UseGuards(DequeueUserGuard)
     dequeueUser(@Body() body: UserDequeueDto){
         return this.queueService.dequeueUser(body);

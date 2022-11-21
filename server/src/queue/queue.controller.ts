@@ -4,7 +4,7 @@ import { UserEnqueueDto, QueueCreateDto, UserDequeueDto, QueueRemoveDto } from "
 import { EnqueueUserGuard } from "./guards/enqueue.guard";
 import { DequeueUserGuard } from "./guards/dequeue.guard";
 import { CreateQueueGuard } from "./guards/create-queue.guard";
-import {RemoveQueueGuard} from "./guards/remove-queue.guard";
+import { RemoveQueueGuard } from "./guards/remove-queue.guard";
 
 @Controller('queues')
 export class QueueController {

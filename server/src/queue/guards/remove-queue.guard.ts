@@ -16,6 +16,6 @@ export class RemoveQueueGuard implements CanActivate {
                 queue_id,
             }
         });
-        return !!queue;
+        return !queue;
     }
 }

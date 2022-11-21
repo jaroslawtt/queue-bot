@@ -16,6 +16,6 @@ export class CreateQueueGuard implements CanActivate {
                 queue_name,
             }
         });
-        return !queue;
+        return !!queue;
     }
 }

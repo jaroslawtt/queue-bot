@@ -1,6 +1,10 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { QueueService } from "./queue.service";
-import {UserEnqueueDto, QueueCreateDto, UserDequeueDto, QueueRemoveDto} from "../../entities";
+import { UserEnqueueDto, QueueCreateDto, UserDequeueDto, QueueRemoveDto } from "../../entities";
+import { EnqueueUserGuard } from "./guards/enqueue.guard";
+import { DequeueUserGuard } from "./guards/dequeue.guard";
+import { CreateQueueGuard } from "./guards/create-queue.guard";
+import {RemoveQueueGuard} from "./guards/remove-queue.guard";
 
 @Controller('queues')
 export class QueueController {
@@ -19,23 +23,27 @@ export class QueueController {
     }
 
     @Post(``)
+    @UseGuards(CreateQueueGuard)
     createQueue(@Body() body: QueueCreateDto){
         return this.queueService.createQueue(body);
     }
 
     @Post(`/enqueue`)
+    @UseGuards(EnqueueUserGuard)
     enqueueUser(@Body() body: UserEnqueueDto){
         return this.queueService.enqueueUser(body);
     }
 
     @Post(`/dequeue`)
     @HttpCode(201)
+    @UseGuards(DequeueUserGuard)
     dequeueUser(@Body() body: UserDequeueDto){
         return this.queueService.dequeueUser(body);
     }
 
     @Delete()
     @HttpCode(201)
+    @UseGuards(RemoveQueueGuard)
     removeQueue(@Body() body: QueueRemoveDto){
         return this.queueService.removeQueue(body);
     }

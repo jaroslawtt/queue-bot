@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {Injectable, CanActivate, ExecutionContext, ForbiddenException} from '@nestjs/common';
 import { PrismaService } from "../../prisma.service";
 import { QueueCreateDto } from "../../../entities";
 
@@ -16,6 +16,9 @@ export class CreateQueueGuard implements CanActivate {
                 queue_name,
             }
         });
-        return !!queue;
+        if(queue) throw new ForbiddenException({
+            message: `The queue with this name already exists`
+        })
+        return true;
     }
 }

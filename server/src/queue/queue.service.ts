@@ -25,7 +25,11 @@ export class QueueService {
     async getAllQueues(){
         return await this.prisma.queue.findMany({
             include: {
-                users: true,
+                users: {
+                    include: {
+                        user: true,
+                    }
+                },
             }
         });
     };

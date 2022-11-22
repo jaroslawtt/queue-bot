@@ -6,6 +6,7 @@ const enum AnswerTemplates {
 `Привіт!
 Я допоможу тобі створити чергу.
 Розпочни командою`,
+    QueueExist = `Queue with this name already exists`,
 }
 
 export const enum AlertTemplates {
@@ -16,17 +17,30 @@ export const enum AlertTemplates {
     DefaultAlert = `Oops, sth went wrong...`,
 }
 
-export const getQueueList = (queue: IQueue) => {
-    let queueList = `${queue.queue_name}/${queue.students_number}`;
+export const getQueueTurnsList = (queue: IQueue) => {
+    let queueTurnsList = `${queue.queue_name}/${queue.students_number}`;
     for(let i = 1; i <= queue.students_number; i++){
         let username: string = ``;
         queue.users.forEach(userProfile => {
             if(userProfile.turn === i) username += userProfile.user.username;
         })
-        queueList += `\n ${i}. ${username}`;
+        queueTurnsList += `\n ${i}. ${username}`;
     }
-    return queueList;
+    return queueTurnsList;
 }
 
+export const getQueueStatsList = (queues: Array<IQueue>) => {
+    let queuesList = `Active queues: ${queues.length}`;
+    for(let i = 0; i<= queues.length; i++){
+        if(queues[i]){
+            let usersInQueue: number = 0;
+            queues[i].users.forEach(() => {
+                usersInQueue += 1;
+            });
+            queuesList += `\n ${i + 1}. ${queues[i].queue_name} ${usersInQueue}/${queues[i].students_number}`
+        }
+    }
+    return queuesList;
+}
 
 export default AnswerTemplates;

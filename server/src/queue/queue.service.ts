@@ -34,16 +34,20 @@ export class QueueService {
         });
     };
 
-    async getQueue(queue_name: string){
+    async getQueue(queue_id?: number){
         return await this.prisma.queue.findUnique({
             where: {
-                queue_name,
+                queue_id,
             },
             include: {
-                users: true,
+                users: {
+                    include: {
+                        user: true,
+                    }
+                },
             }
         })
-    };
+    }
 
     async enqueueUser({ queue_id, user_id, username, turn }: UserEnqueueDto): Promise<any>{
         await this.prisma.usersOnQueues.create({

@@ -1,14 +1,12 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
-import AnswerTemplates, { AlertTemplates, getQueueList } from "./src/answer-templates/templates";
+import AnswerTemplates, {AlertTemplates, getQueueStatsList, getQueueTurnsList} from "./src/answer-templates/templates";
 import {QueueForm, IQueue, AxiosErrorMessage} from "./types";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
-import { getInlineKeyboard } from "./src/inline_keyboard";
-import { createQueue, dequeueUser, enqueueUser } from "./src/api";
+import {getQueuesInlineKeyboard, getTurnsInlineKeyboard} from "./src/inline_keyboard";
+import {createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues} from "./src/api";
 
 config({path: `.env`});
-
-let tableQueue: { [key: number] : string};
 
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
@@ -30,15 +28,22 @@ bot.onText(/\/start/, async msg => {
     await bot.sendMessage(msg.chat.id, AnswerTemplates.Greetings);
 });
 
+// call this to create queue
 bot.onText(/\/create/, async msg => {
     const { chat } = msg;
     await bot.sendMessage(chat.id, `Type your queue's name`);
 });
 
 
-//active queues
+//call this to see all active queues
 bot.onText(/\/active/, async msg => {
-
+    const chat_id = msg.chat.id;
+    const queues = await fetchQueues();
+    await bot.sendMessage(chat_id, getQueueStatsList(queues), {
+          reply_markup: {
+              inline_keyboard: getQueuesInlineKeyboard(queues),
+          }
+    });
 });
 
 bot.onText(/\/delete/, async msg => {
@@ -54,16 +59,22 @@ bot.on(`message`, async msg => {
     if(queueForm.name && queueForm.numberOfStudents){
         try {
             const newQueue: IQueue = await createQueue(queueForm);
-            const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getInlineKeyboard(newQueue);
-            await bot.sendMessage(msg.chat.id, `${getQueueList(newQueue)}`, {
+            const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
+            await bot.sendMessage(msg.chat.id, `${getQueueTurnsList(newQueue)}`, {
                 reply_markup: {
                     inline_keyboard: inlineKeyboard,
                     resize_keyboard: true,
                 }
             });
         }
-        catch (e) {
-           await bot.sendMessage(msg.chat.id, JSON.stringify(e))
+        catch (e: any) {
+           if(e.response.status === 403){
+               await bot.sendMessage(msg.chat.id, AnswerTemplates.QueueExist);
+               queueForm.numberOfStudents = null;
+           }
+           else{
+               await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
+           }
         }
     }
 });
@@ -85,9 +96,9 @@ bot.on(`callback_query`, async (msg) => {
                 switch (type) {
                     case `turn`:
                         queue = await enqueueUser(msg.from.id, username, queue_id, turn);
-                        await bot.editMessageText(getQueueList(queue), {
+                        await bot.editMessageText(getQueueTurnsList(queue), {
                             reply_markup: {
-                                inline_keyboard: getInlineKeyboard(queue),
+                                inline_keyboard: getTurnsInlineKeyboard(queue),
                             },
                             message_id,
                             chat_id,
@@ -95,13 +106,17 @@ bot.on(`callback_query`, async (msg) => {
                         break;
                     case `cancel`:
                         queue = await dequeueUser(msg.from.id, queue_id);
-                        await bot.editMessageText(getQueueList(queue), {
+                        await bot.editMessageText(getQueueTurnsList(queue), {
                             reply_markup: {
-                                inline_keyboard: getInlineKeyboard(queue),
+                                inline_keyboard: getTurnsInlineKeyboard(queue),
                             },
                             message_id,
                             chat_id,
                         })
+                        break;
+                    case `queue`:
+                        queue = await fetchQueue(queue_id);
+                        await bot.sendMessage(chat_id,`${getQueueTurnsList(queue)}`);
                         break;
                 }
             } catch (e: any) {

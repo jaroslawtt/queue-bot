@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
+import {Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Query, UseGuards} from '@nestjs/common';
 import { QueueService } from "./queue.service";
 import { UserEnqueueDto, QueueCreateDto, UserDequeueDto, QueueRemoveDto } from "../../entities";
 import { CreateQueueGuard, DequeueUserGuard, IsQueueExistGuard, RemoveQueueGuard, EnqueueUserGuard } from "./guards";
@@ -15,9 +15,9 @@ export class QueueController {
         return this.queueService.getAllQueues();
     }
 
-    @Get(`/`)
-    getQueue(@Query(`name`) queryName: string){
-        return this.queueService.getQueue(queryName);
+    @Get(`/:id`)
+    getQueue(@Param(`id`, ParseIntPipe) id: number){
+        return this.queueService.getQueue(id);
     }
 
     @Post(``)

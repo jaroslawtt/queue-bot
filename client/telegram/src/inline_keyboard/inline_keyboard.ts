@@ -6,7 +6,7 @@ import { IQueue } from "../../types";
 const cancelButton: InlineKeyboardButton = { text: `cancel`, callback_data: ``};
 
 
-export const getInlineKeyboard = (queue: IQueue): Array<Array<InlineKeyboardButton>> => {
+export const getTurnsInlineKeyboard = (queue: IQueue): Array<Array<InlineKeyboardButton>> => {
     const inlineKeyboard: Array<Array<InlineKeyboardButton>> = [];
     const turns = queue.users.map(student => student.turn);
     let buttons: Array<InlineKeyboardButton> = [];
@@ -21,3 +21,13 @@ export const getInlineKeyboard = (queue: IQueue): Array<Array<InlineKeyboardButt
     return inlineKeyboard;
 };
 
+export const getQueuesInlineKeyboard = (queues: Array<IQueue>): Array<Array<InlineKeyboardButton>> => {
+    const inlineKeyboard: Array<Array<InlineKeyboardButton>> = [];
+    const button: Array<InlineKeyboardButton> = [];
+    for (const queue of queues) {
+        button.push({text: queue.queue_name, callback_data: `queue//${queue.queue_id}`});
+        inlineKeyboard.push([...button]);
+        button.splice(0,button.length);
+    }
+    return inlineKeyboard;
+};

@@ -7,16 +7,12 @@ const api = axios.create({
 });
 
 
-export const fetchQueues = () => {
+export const fetchQueues = (): Promise<Array<IQueue>> => {
     return api.get(``).then(res => res.data);
 }
 
-export const fetchQueue =  (queueName: string): Promise<Array<IQueue>> => {
-    return api.get(``, {
-        params: {
-            name: queueName,
-        }
-    })
+export const fetchQueue =  (queue_id: number): Promise<IQueue> => {
+    return api.get(`/${queue_id}`)
         .then(res => res.data);
 }
 

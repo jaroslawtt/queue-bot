@@ -10,23 +10,12 @@ export class EnqueueUserGuard implements CanActivate {
         context: ExecutionContext,
     ): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
-        const { user_id, queue_id: queueId }: UserEnqueueDto = request.body;
-        const user = await this.prisma.user.findUnique({
-            where: {
-                user_id,
-            },
-            include: {
-                queues: {
-                    where: {
-                        queueId,
-                    }
-                }
-            }
-        });
-        if(user){
-            const { queues } = user;
-            for(let i = 0; i <= queues.length; i++){
-                if(queues[i]?.queueId === queueId) return false;
+        const { user_id, queue_id: queueId, turn }: UserEnqueueDto = request.body;
+        const usersOnQueues = await this.prisma.usersOnQueues.findMany();
+        if(usersOnQueues){
+            for (const userOnQueue of usersOnQueues) {
+                if(userOnQueue.userId === user_id && userOnQueue.queueId === queueId) return false;
+                if(userOnQueue.userId !== user_id && userOnQueue.queueId === queueId && userOnQueue.turn === turn) return false;
             }
         }
         return true;

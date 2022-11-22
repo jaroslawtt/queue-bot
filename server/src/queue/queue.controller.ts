@@ -5,6 +5,7 @@ import { EnqueueUserGuard } from "./guards/enqueue.guard";
 import { DequeueUserGuard } from "./guards/dequeue.guard";
 import { CreateQueueGuard } from "./guards/create-queue.guard";
 import { RemoveQueueGuard } from "./guards/remove-queue.guard";
+import {IsQueueExistGuard} from "./guards/queue-exist.guard";
 
 @Controller('queues')
 export class QueueController {
@@ -29,13 +30,13 @@ export class QueueController {
     }
 
     @Post(`/enqueue`)
-    @UseGuards(EnqueueUserGuard)
+    @UseGuards(IsQueueExistGuard,EnqueueUserGuard)
     enqueueUser(@Body() body: UserEnqueueDto){
         return this.queueService.enqueueUser(body);
     }
 
     @Post(`/dequeue`)
-    @UseGuards(DequeueUserGuard)
+    @UseGuards(IsQueueExistGuard,DequeueUserGuard)
     dequeueUser(@Body() body: UserDequeueDto){
         return this.queueService.dequeueUser(body);
     }

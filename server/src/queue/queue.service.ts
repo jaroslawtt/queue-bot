@@ -68,7 +68,11 @@ export class QueueService {
                 queue_id,
             },
             include: {
-                users: true,
+                users: {
+                    include: {
+                        user: true,
+                    }
+                },
             }
         })
     };
@@ -88,7 +92,7 @@ export class QueueService {
             },
             include: {
                 users: true,
-            }
+            },
         })
     };
 

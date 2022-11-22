@@ -9,8 +9,11 @@ const enum AnswerTemplates {
 }
 
 export const enum AlertTemplates {
+    TakenTurn = `This turn has been taken already`,
     InQueue = `You are already in the queue`,
-    OutQueue = `You are not in the queue`
+    OutQueue = `You are not in the queue`,
+    QueueNotExist = `This queue doesn't exist anymore`,
+    DefaultAlert = `Oops, sth went wrong...`,
 }
 
 export const getQueueList = (queue: IQueue) => {

@@ -1,11 +1,8 @@
 import { Body, Controller, Delete, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { QueueService } from "./queue.service";
 import { UserEnqueueDto, QueueCreateDto, UserDequeueDto, QueueRemoveDto } from "../../entities";
-import { EnqueueUserGuard } from "./guards/enqueue.guard";
-import { DequeueUserGuard } from "./guards/dequeue.guard";
-import { CreateQueueGuard } from "./guards/create-queue.guard";
-import { RemoveQueueGuard } from "./guards/remove-queue.guard";
-import {IsQueueExistGuard} from "./guards/queue-exist.guard";
+import { CreateQueueGuard, DequeueUserGuard, IsQueueExistGuard, RemoveQueueGuard, EnqueueUserGuard } from "./guards";
+
 
 @Controller('queues')
 export class QueueController {
@@ -30,7 +27,7 @@ export class QueueController {
     }
 
     @Post(`/enqueue`)
-    @UseGuards(IsQueueExistGuard,EnqueueUserGuard)
+    @UseGuards(IsQueueExistGuard, EnqueueUserGuard)
     enqueueUser(@Body() body: UserEnqueueDto){
         return this.queueService.enqueueUser(body);
     }

@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
 import AnswerTemplates, { AlertTemplates, getQueueList } from "./src/answer-templates/templates";
-import { QueueForm, IQueue } from "./types";
+import {QueueForm, IQueue, AxiosErrorMessage} from "./types";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 import { getInlineKeyboard } from "./src/inline_keyboard";
 import { createQueue, dequeueUser, enqueueUser } from "./src/api";
@@ -79,12 +79,11 @@ bot.on(`callback_query`, async (msg) => {
         const username: string = msg?.from.first_name || ``;
         const message_id: number = msg.message.message_id;
         const chat_id: number = msg.message.chat.id;
-        console.log(msg?.data?.split("/"))
         if (type) {
-            let queue: IQueue;
-            switch (type) {
-                case `turn`:
-                    try {
+            try {
+                let queue: IQueue;
+                switch (type) {
+                    case `turn`:
                         queue = await enqueueUser(msg.from.id, username, queue_id, turn);
                         await bot.editMessageText(getQueueList(queue), {
                             reply_markup: {
@@ -93,15 +92,8 @@ bot.on(`callback_query`, async (msg) => {
                             message_id,
                             chat_id,
                         })
-                    }
-                    catch (e: any) {
-                        if(e.response?.status === 403) await bot.answerCallbackQuery(msg.id, {
-                            text: e.response?.data?.message || AlertTemplates.InQueue, show_alert: true,
-                        })
-                    }
-                    break;
-                case `cancel`:
-                    try {
+                        break;
+                    case `cancel`:
                         queue = await dequeueUser(msg.from.id, queue_id);
                         await bot.editMessageText(getQueueList(queue), {
                             reply_markup: {
@@ -110,17 +102,46 @@ bot.on(`callback_query`, async (msg) => {
                             message_id,
                             chat_id,
                         })
+                        break;
+                }
+            } catch (e: any) {
+                if (e?.response?.status === 403) {
+                    const message: AxiosErrorMessage = e.response?.data?.message;
+                    switch (message) {
+                        case `The turn is already taken`:
+                            await bot.answerCallbackQuery(msg.id, {
+                                text: AlertTemplates.TakenTurn, show_alert: true,
+                            });
+                            break;
+                        case `User is already in queue`:
+                            await bot.answerCallbackQuery(msg.id, {
+                                text: AlertTemplates.InQueue, show_alert: true,
+                            });
+                            break;
+                        case `User isn't in the queue`:
+                            await bot.answerCallbackQuery(msg.id, {
+                                text: AlertTemplates.OutQueue, show_alert: true,
+                            });
+                            break;
+                        case "This queue doesn't exist anymore":
+                            await bot.answerCallbackQuery(msg.id, {
+                                text: AlertTemplates.QueueNotExist, show_alert: true,
+                            });
+                            await bot.deleteMessage(chat_id, message_id);
+                            break;
+                        default:
+                            await bot.answerCallbackQuery(msg.id, {
+                                text: AlertTemplates.DefaultAlert, show_alert: true,
+                            });
                     }
-                    catch (e: any) {
-                        if(e.response?.status === 403) await bot.answerCallbackQuery(msg.id, {
-                            text: e.response?.data?.message || AlertTemplates.OutQueue, show_alert: true,
-                        })
-                    }
-                    break;
-
+                } else {
+                    await bot.answerCallbackQuery(msg.id, {
+                        text: AlertTemplates.DefaultAlert, show_alert: true,
+                    });
+                }
             }
-        }
     }
+}
 });
 
 

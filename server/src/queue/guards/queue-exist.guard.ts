@@ -11,14 +11,14 @@ export class IsQueueExistGuard implements CanActivate {
     ): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const { queue_id }: UserEnqueueDto | UserDequeueDto  = request.body;
-        const queue = this.prisma.queue.findUnique({
+        const queue = await this.prisma.queue.findUnique({
             where: {
                 queue_id,
             }
         })
         if(!queue) throw new ForbiddenException({
             message: `This queue doesn't exist anymore`,
-        })
+        });
         return true;
     }
 }

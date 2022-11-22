@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext,ForbiddenException } from '@nestjs/common';
 import { PrismaService } from "../../prisma.service";
 import { UserEnqueueDto } from "../../../entities";
 

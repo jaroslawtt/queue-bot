@@ -96,8 +96,8 @@ bot.on(`callback_query`, async (msg) => {
                         })
                     }
                     catch (e: any) {
-                        if(e.response?.data?.statusCode === 403) await bot.answerCallbackQuery(msg.id, {
-                            text: AlertTemplates.InQueue, show_alert: true,
+                        if(e.response?.status === 403) await bot.answerCallbackQuery(msg.id, {
+                            text: e.response?.data?.message || AlertTemplates.InQueue, show_alert: true,
                         })
                     }
                     break;
@@ -113,8 +113,8 @@ bot.on(`callback_query`, async (msg) => {
                         })
                     }
                     catch (e: any) {
-                        if(e.response?.data?.statusCode === 403) await bot.answerCallbackQuery(msg.id, {
-                            text: AlertTemplates.OutQueue, show_alert: true,
+                        if(e.response?.status === 403) await bot.answerCallbackQuery(msg.id, {
+                            text: e.response?.data?.message || AlertTemplates.OutQueue, show_alert: true,
                         })
                     }
                     break;

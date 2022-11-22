@@ -21,7 +21,3 @@ export const getInlineKeyboard = (queue: IQueue): Array<Array<InlineKeyboardButt
     return inlineKeyboard;
 };
 
-
-export const updateInlineKeyboard = () => {
-
-}

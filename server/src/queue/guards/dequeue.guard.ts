@@ -33,12 +33,11 @@ export class DequeueUserGuard implements CanActivate {
         if(user){
             const { queues } = user;
             for(let i = 0; i <= queues.length; i++){
-                if(queues[i]?.queueId === queueId) throw new ForbiddenException({
-                    statusCode: 403,
-                    message: `User isn't in the queue`,
-                });
+                if(queues[i]?.queueId === queueId) return true
             }
         }
-        return false;
+        throw new ForbiddenException({
+            message: `User isn't in the queue`,
+        });
     }
 }

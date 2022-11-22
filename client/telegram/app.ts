@@ -1,11 +1,10 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
-import AnswerTemplates, {AlertTemplates, getQueueList} from "./src/answer-templates/templates";
-import {QueueForm, IQueue, CallbackQueryType, ICallbackQuery} from "./types";
+import AnswerTemplates, { AlertTemplates, getQueueList } from "./src/answer-templates/templates";
+import { QueueForm, IQueue } from "./types";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 import { getInlineKeyboard } from "./src/inline_keyboard";
-import {createQueue, dequeueUser, enqueueUser} from "./src/api";
-import {AxiosError} from "axios";
+import { createQueue, dequeueUser, enqueueUser } from "./src/api";
 
 config({path: `.env`});
 

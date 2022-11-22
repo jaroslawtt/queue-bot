@@ -2,8 +2,6 @@ import {
     Injectable,
     CanActivate,
     ExecutionContext,
-    UnauthorizedException,
-    BadRequestException,
     ForbiddenException
 } from '@nestjs/common';
 import { PrismaService } from "../../prisma.service";

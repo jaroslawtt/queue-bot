@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {Injectable, CanActivate, ExecutionContext, UnauthorizedException} from '@nestjs/common';
 import { PrismaService } from "../../prisma.service";
 import { UserEnqueueDto } from "../../../entities";
 
@@ -26,7 +26,7 @@ export class DequeueUserGuard implements CanActivate {
         if(user){
             const { queues } = user;
             for(let i = 0; i <= queues.length; i++){
-                if(queues[i]?.queueId === queueId) return true;
+                if(queues[i]?.queueId === queueId) throw new UnauthorizedException(`User isn't in queue`);
             }
         }
         return false;

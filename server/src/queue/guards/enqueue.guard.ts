@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {Injectable, CanActivate, ExecutionContext, UnauthorizedException} from '@nestjs/common';
 import { PrismaService } from "../../prisma.service";
 import { UserEnqueueDto } from "../../../entities";
 
@@ -14,8 +14,8 @@ export class EnqueueUserGuard implements CanActivate {
         const usersOnQueues = await this.prisma.usersOnQueues.findMany();
         if(usersOnQueues){
             for (const userOnQueue of usersOnQueues) {
-                if(userOnQueue.userId === user_id && userOnQueue.queueId === queueId) return false;
-                if(userOnQueue.userId !== user_id && userOnQueue.queueId === queueId && userOnQueue.turn === turn) return false;
+                if(userOnQueue.userId === user_id && userOnQueue.queueId === queueId) throw new UnauthorizedException(`User is already in queue`);
+                if(userOnQueue.userId !== user_id && userOnQueue.queueId === queueId && userOnQueue.turn === turn) throw new UnauthorizedException(`The turn is already taken`);
             }
         }
         return true;

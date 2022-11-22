@@ -1,4 +1,4 @@
-import {IQueue} from "../../types";
+import { IQueue } from "../../types";
 
 
 const enum AnswerTemplates {

@@ -91,7 +91,11 @@ export class QueueService {
                 queue_id: queueId,
             },
             include: {
-                users: true,
+                users: {
+                    include: {
+                        user: true,
+                    }
+                }
             },
         })
     };

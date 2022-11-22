@@ -1,9 +1,11 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
-import AnswerTemplates from "./src/answer-templates/templates";
-import { Queue } from "./types";
+import AnswerTemplates, {AlertTemplates, getQueueList} from "./src/answer-templates/templates";
+import {QueueForm, IQueue, CallbackQueryType, ICallbackQuery} from "./types";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 import { getInlineKeyboard } from "./src/inline_keyboard";
+import {createQueue, dequeueUser, enqueueUser} from "./src/api";
+import {AxiosError} from "axios";
 
 config({path: `.env`});
 
@@ -20,7 +22,7 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
     },
 });
 
-const queue: Queue = {
+const queueForm: QueueForm = {
     name: ``,
     numberOfStudents: null,
 }
@@ -47,28 +49,79 @@ bot.onText(/\/delete/, async msg => {
 bot.on(`message`, async msg => {
     if(msg.text && msg.text.search(/\/.*/) === -1){
        const { text } = msg;
-       if(isNaN(parseInt(text)) && !queue.name) queue.name = text;
-       else queue.numberOfStudents = parseInt(text);
+       if(isNaN(parseInt(text)) && !queueForm.name) queueForm.name = text;
+       else queueForm.numberOfStudents = parseInt(text);
     }
-    if(queue.name && queue.numberOfStudents){
-        const inlineKeyboard: Array<Array<InlineKeyboardButton>> = await getInlineKeyboard(queue.numberOfStudents);
-        await bot.sendMessage(msg.chat.id, `${queue.numberOfStudents}`, {
-            reply_markup: {
-                inline_keyboard: inlineKeyboard,
-                resize_keyboard: true,
-            }
-        });
+    if(queueForm.name && queueForm.numberOfStudents){
+        try {
+            const newQueue: IQueue = await createQueue(queueForm);
+            const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getInlineKeyboard(newQueue);
+            await bot.sendMessage(msg.chat.id, `${getQueueList(newQueue)}`, {
+                reply_markup: {
+                    inline_keyboard: inlineKeyboard,
+                    resize_keyboard: true,
+                }
+            });
+        }
+        catch (e) {
+           await bot.sendMessage(msg.chat.id, JSON.stringify(e))
+        }
     }
 });
 
 
 //handling choosing turn in query and cancel turn
 
-bot.on(`callback_query`, async msg => {
-    const message_id  = msg?.message?.message_id;
-   /* if(msg.data && msg.data.search(/turn\//) !== -1 && message_id){
+bot.on(`callback_query`, async (msg) => {
+    if(msg.data && msg.message) {
+        const type: string = msg.data.split("/")[0] || ``;
+        const turn: number = parseInt(msg?.data?.split("/")[1]) || 0;
+        const queue_id: number = parseInt(msg?.data?.split("/")[2]);
+        const username: string = msg?.from.first_name || ``;
+        const message_id: number = msg.message.message_id;
+        const chat_id: number = msg.message.chat.id;
+        console.log(msg?.data?.split("/"))
+        if (type) {
+            let queue: IQueue;
+            switch (type) {
+                case `turn`:
+                    try {
+                        queue = await enqueueUser(msg.from.id, username, queue_id, turn);
+                        await bot.editMessageText(getQueueList(queue), {
+                            reply_markup: {
+                                inline_keyboard: getInlineKeyboard(queue),
+                            },
+                            message_id,
+                            chat_id,
+                        })
+                    }
+                    catch (e: any) {
+                        if(e.response?.data?.statusCode === 403) await bot.answerCallbackQuery(msg.id, {
+                            text: AlertTemplates.InQueue, show_alert: true,
+                        })
+                    }
+                    break;
+                case `cancel`:
+                    try {
+                        queue = await dequeueUser(msg.from.id, queue_id);
+                        await bot.editMessageText(getQueueList(queue), {
+                            reply_markup: {
+                                inline_keyboard: getInlineKeyboard(queue),
+                            },
+                            message_id,
+                            chat_id,
+                        })
+                    }
+                    catch (e: any) {
+                        if(e.response?.data?.statusCode === 403) await bot.answerCallbackQuery(msg.id, {
+                            text: AlertTemplates.OutQueue, show_alert: true,
+                        })
+                    }
+                    break;
 
-    }*/
+            }
+        }
+    }
 });
 
 

@@ -1,10 +1,9 @@
 {
   "version": 2,
-  "public": true,
-  "routes": [
+  "builds": [
     {
-      "src": "/",
-      "dest": "dist/app.js"
+      "src": "src/app.ts",
+      "use": "@vercel/node"
     }
   ]
 }

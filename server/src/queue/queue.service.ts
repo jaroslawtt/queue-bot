@@ -4,7 +4,7 @@ import { UserEnqueueDto, UserDequeueDto, QueueRemoveDto, QueueCreateDto, QueuesG
 
 
 
-BigInt.prototype.toJSON = function () {
+BigInt.prototype[`toJSON`]= function () {
     return this.toString();
 };
 

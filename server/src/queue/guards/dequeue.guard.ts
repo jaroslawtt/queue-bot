@@ -35,7 +35,7 @@ export class DequeueUserGuard implements CanActivate {
             }
         }
         throw new ForbiddenException({
-            message: `User isn't in the queue`,
+            message: `You ain't in the queue`,
         });
     }
 }

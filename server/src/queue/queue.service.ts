@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from "../prisma.service";
-import { UserEnqueueDto, QueueCreateDto, UserDequeueDto, QueueRemoveDto } from "../../entities";
+import { UserEnqueueDto, UserDequeueDto, QueueRemoveDto, QueueCreateDto, QueuesGetDto} from "../../entities";
 
 
+
+BigInt.prototype.toJSON = function () {
+    return this.toString();
+};
 
 @Injectable()
 export class QueueService {
@@ -10,11 +14,23 @@ export class QueueService {
     }
 
 
-    async createQueue({ queue_name, students_number}: QueueCreateDto) {
+    async createQueue({ queue_name, students_number, user_id, username, chat_id: chatId}: QueueCreateDto) {
         return await this.prisma.queue.create({
             data: {
                 queue_name,
                 students_number,
+                chatId: BigInt(chatId),
+                host: {
+                    connectOrCreate: {
+                        where: {
+                            user_id,
+                        },
+                        create: {
+                            user_id,
+                            username,
+                        }
+                    }
+                }
             },
             include: {
                 users: true,
@@ -22,8 +38,11 @@ export class QueueService {
         })
     }
 
-    async getAllQueues(){
+    async getAllQueues(chat_id){
         return await this.prisma.queue.findMany({
+            where: {
+                chatId: BigInt(chat_id),
+            },
             include: {
                 users: {
                     include: {

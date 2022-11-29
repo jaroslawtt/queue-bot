@@ -15,7 +15,7 @@ export class EnqueueUserGuard implements CanActivate {
         if(usersOnQueues){
             for (const userOnQueue of usersOnQueues) {
                 if(userOnQueue.userId === user_id && userOnQueue.queueId === queueId) throw new ForbiddenException({
-                    message: `User is already in queue`,
+                    message: `You are already in the queue`,
                 });
                 if(userOnQueue.userId !== user_id && userOnQueue.queueId === queueId && userOnQueue.turn === turn) throw new ForbiddenException({
                     message: `The turn is already taken`,

@@ -1,12 +1,12 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
-import AnswerTemplates, {AlertTemplates, getQueueStatsList, getQueueTurnsList} from "./src/answer-templates/templates";
-import {QueueForm, IQueue, AxiosErrorMessage} from "./types";
+import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./src/answer-templates/templates";
+import { QueueForm, IQueue, AxiosErrorMessage } from "./types";
+import { getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./src/inline_keyboard";
+import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./src/api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
-import {getQueuesInlineKeyboard, getTurnsInlineKeyboard} from "./src/inline_keyboard";
-import {createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues} from "./src/api";
 
-config({path: `.env`});
+config({ path: `.env` });
 
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
@@ -19,65 +19,110 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
     },
 });
 
+let creatorId: number | null = null;
+
 const queueForm: QueueForm = {
     name: ``,
     numberOfStudents: null,
 }
 
+
 bot.onText(/\/start/, async msg => {
-    await bot.sendMessage(msg.chat.id, AnswerTemplates.Greetings);
+    await bot.sendMessage(msg.chat.id, '', {
+        parse_mode: `HTML`,
+        disable_notification: true,
+    });
 });
 
 // call this to create queue
 bot.onText(/\/create/, async msg => {
-    const { chat } = msg;
-    await bot.sendMessage(chat.id, `Type your queue's name`);
+    creatorId = msg?.from?.id || null;
+    queueForm.name = ``;
+    queueForm.numberOfStudents = null;
+    if(creatorId){
+      /*  await bot.deleteMessage(msg.chat.id, msg.message_id);*/
+        await bot.sendMessage(msg.chat.id, `Send a name for your queue`, {
+            reply_to_message_id: msg.message_id,
+        });
+    }
 });
 
 
-//call this to see all active queues
-bot.onText(/\/active/, async msg => {
+bot.onText(/\/cancel/, async msg => {
+    if(msg.from && msg.from?.id === creatorId){
+        creatorId = null;
+        queueForm.name = ``;
+        queueForm.numberOfStudents = null;
+    }
+});
+
+
+//call this to see all available queues
+bot.onText(/\/queues/, async msg => {
     const chat_id = msg.chat.id;
-    const queues = await fetchQueues();
+    try {
+        const queues = await fetchQueues(chat_id);
+        await bot.sendMessage(chat_id, getQueueStatsList(queues), {
+            reply_markup: {
+                inline_keyboard: getQueuesInlineKeyboard(queues, `queue`),
+            }
+        });
+    }
+    catch (e: any) {
+        console.log(e);
+    }
+});
+
+bot.onText(/\/remove/, async msg => {
+    const chat_id = msg.chat.id;
+    const queues = await fetchQueues(chat_id);
     await bot.sendMessage(chat_id, getQueueStatsList(queues), {
-          reply_markup: {
-              inline_keyboard: getQueuesInlineKeyboard(queues),
-          }
+        reply_markup: {
+            inline_keyboard: getQueuesInlineKeyboard(queues, `delete`),
+        }
     });
-});
+})
 
-bot.onText(/\/delete/, async msg => {
 
-});
-
+//handling
 bot.on(`message`, async msg => {
-    if(msg.text && msg.text.search(/\/.*/) === -1){
-       const { text } = msg;
-       if(isNaN(parseInt(text)) && !queueForm.name) queueForm.name = text;
-       else queueForm.numberOfStudents = parseInt(text);
-    }
-    if(queueForm.name && queueForm.numberOfStudents){
-        try {
-            const newQueue: IQueue = await createQueue(queueForm);
-            const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
-            await bot.sendMessage(msg.chat.id, `${getQueueTurnsList(newQueue)}`, {
-                reply_markup: {
-                    inline_keyboard: inlineKeyboard,
-                    resize_keyboard: true,
-                }
-            });
-        }
-        catch (e: any) {
-           if(e.response.status === 403){
-               await bot.sendMessage(msg.chat.id, AnswerTemplates.QueueExist);
-               queueForm.numberOfStudents = null;
+    if(creatorId){
+       if(msg.from && msg.from?.id === creatorId && msg.text && !RegExp(/\/+/).test(msg.text)){
+           const { text } = msg;
+           if(queueForm.name.length === 0){
+                queueForm.name = text;
+                await bot.sendMessage(msg.chat.id, `Send number of students`, {
+                    reply_to_message_id: msg.message_id,
+                });
            }
-           else{
-               await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
+           else if(!queueForm.numberOfStudents && !Number.isNaN(parseInt(text))){
+               queueForm.numberOfStudents = parseInt(text);
+               const username: string = msg?.from.first_name || ``;
+               try {
+                   const newQueue: IQueue = await createQueue(queueForm, creatorId, username, msg.chat.id);
+                   const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
+                   await bot.sendMessage(msg.chat.id, `${getQueueTurnsList(newQueue)}`, {
+                       reply_markup: {
+                           inline_keyboard: inlineKeyboard,
+                           resize_keyboard: true,
+                       }
+                   });
+               }
+               catch (e: any) {
+                   if(e.response.status === 403){
+                       await bot.sendMessage(msg.chat.id, AnswerTemplates.QueueExist);
+                       queueForm.name = ``;
+                       queueForm.numberOfStudents = null;
+                   }
+                   else{
+                       await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
+                   }
+               }
            }
-        }
+       }
     }
 });
+
 
 
 //handling choosing turn in query and cancel turn
@@ -116,38 +161,29 @@ bot.on(`callback_query`, async (msg) => {
                         break;
                     case `queue`:
                         queue = await fetchQueue(queue_id);
+                        await bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
                         await bot.sendMessage(chat_id,`${getQueueTurnsList(queue)}`);
+                        break;
+                    case `delete`:
+                        await removeQueue(queue_id, msg.from.id);
+                        await bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
                         break;
                 }
             } catch (e: any) {
+                console.log(e);
                 if (e?.response?.status === 403) {
-                    const message: AxiosErrorMessage = e.response?.data?.message;
-                    switch (message) {
-                        case `The turn is already taken`:
-                            await bot.answerCallbackQuery(msg.id, {
-                                text: AlertTemplates.TakenTurn, show_alert: true,
-                            });
-                            break;
-                        case `User is already in queue`:
-                            await bot.answerCallbackQuery(msg.id, {
-                                text: AlertTemplates.InQueue, show_alert: true,
-                            });
-                            break;
-                        case `User isn't in the queue`:
-                            await bot.answerCallbackQuery(msg.id, {
-                                text: AlertTemplates.OutQueue, show_alert: true,
-                            });
-                            break;
+                    const text: AxiosErrorMessage = e.response?.data?.message;
+                    switch (text) {
                         case "This queue doesn't exist anymore":
-                            await bot.answerCallbackQuery(msg.id, {
-                                text: AlertTemplates.QueueNotExist, show_alert: true,
-                            });
                             await bot.deleteMessage(chat_id, message_id);
+                            await bot.answerCallbackQuery(msg.id, {
+                                text, show_alert: true,
+                            })
                             break;
                         default:
                             await bot.answerCallbackQuery(msg.id, {
-                                text: AlertTemplates.DefaultAlert, show_alert: true,
-                            });
+                                text, show_alert: true,
+                            })
                     }
                 } else {
                     await bot.answerCallbackQuery(msg.id, {

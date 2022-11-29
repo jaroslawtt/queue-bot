@@ -18,7 +18,8 @@ export const enum AlertTemplates {
 }
 
 export const getQueueTurnsList = (queue: IQueue) => {
-    let queueTurnsList = `${queue.queue_name}/${queue.students_number}`;
+    let queueTurnsList = `Queue name: ${queue.queue_name}
+Turns: ${queue.students_number}`;
     for(let i = 1; i <= queue.students_number; i++){
         let username: string = ``;
         queue.users.forEach(userProfile => {

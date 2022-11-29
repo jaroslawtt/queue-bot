@@ -7,19 +7,23 @@ const api = axios.create({
 });
 
 
-export const fetchQueues = (): Promise<Array<IQueue>> => {
-    return api.get(``).then(res => res.data);
+export const fetchQueues = (chat_id: number): Promise<Array<IQueue>> => {
+    return api.get(`/${chat_id}`, {
+    }).then(res => res.data);
 }
 
 export const fetchQueue =  (queue_id: number): Promise<IQueue> => {
-    return api.get(`/${queue_id}`)
+    return api.get(`/queue/${queue_id}`)
         .then(res => res.data);
 }
 
-export const createQueue = (queueForm: QueueForm): Promise<IQueue> => {
+export const createQueue = (queueForm: QueueForm, user_id: number, username: string, chat_id: number): Promise<IQueue> => {
     return api.post(``, {
         queue_name: queueForm.name,
         students_number: queueForm.numberOfStudents,
+        user_id,
+        username,
+        chat_id,
     })
         .then(res => res.data);
 };
@@ -38,5 +42,14 @@ export const dequeueUser = (user_id: number, queue_id: number) => {
             user_id,
             queue_id
         }).then(res => res.data);
+}
+
+export const removeQueue = (queue_id: number, user_id: number) => {
+    return api.delete(``, {
+        data: {
+            queue_id,
+            user_id,
+        }
+    })
 }
 

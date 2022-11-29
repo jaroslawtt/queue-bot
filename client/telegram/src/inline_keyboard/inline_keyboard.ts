@@ -21,11 +21,11 @@ export const getTurnsInlineKeyboard = (queue: IQueue): Array<Array<InlineKeyboar
     return inlineKeyboard;
 };
 
-export const getQueuesInlineKeyboard = (queues: Array<IQueue>): Array<Array<InlineKeyboardButton>> => {
+export const getQueuesInlineKeyboard = (queues: Array<IQueue>, callback_data: string): Array<Array<InlineKeyboardButton>> => {
     const inlineKeyboard: Array<Array<InlineKeyboardButton>> = [];
     const button: Array<InlineKeyboardButton> = [];
     for (const queue of queues) {
-        button.push({text: queue.queue_name, callback_data: `queue//${queue.queue_id}`});
+        button.push({text: queue.queue_name, callback_data: `${callback_data}//${queue.queue_id}`});
         inlineKeyboard.push([...button]);
         button.splice(0,button.length);
     }

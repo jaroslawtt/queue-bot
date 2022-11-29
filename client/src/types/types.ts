@@ -1,4 +1,4 @@
-import TelegramBot from "../local_modules/@types/node-telegram-bot-api";
+import TelegramBot from "../../local_modules/@types/node-telegram-bot-api";
 import CallbackQuery = TelegramBot.CallbackQuery;
 
 

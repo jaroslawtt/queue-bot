@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id  Int             @id @default(autoincrement())
+  username String
+  queues   UsersOnQueues[]
+  is_admin Boolean         @default(false)
+  Queue    Queue[]
+}
+
+model Queue {
+  queue_id        Int             @id @default(autoincrement())
+  queue_name      String          @unique
+  students_number Int
+  created_at      DateTime        @default(now())
+  users           UsersOnQueues[]
+  host            User            @relation(fields: [hostId], references: [user_id])
+  hostId          Int
+  chatId BigInt
+}
+
+model UsersOnQueues {
+  user    User  @relation(fields: [userId], references: [user_id], onDelete: Cascade)
+  userId  Int
+  queue   Queue @relation(fields: [queueId], references: [queue_id], onDelete: Cascade)
+  queueId Int
+  turn    Int   @default(autoincrement())
+
+  @@id([userId, queueId])
+}

@@ -1,6 +1,6 @@
 import TelegramBot from "../../local_modules/@types/node-telegram-bot-api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
-import { IQueue } from "../../types";
+import { IQueue } from "../types";
 
 
 const cancelButton: InlineKeyboardButton = { text: `cancel`, callback_data: ``};

@@ -1,9 +1,9 @@
 import axios from "axios";
-import { QueueForm, IQueue } from "../../types";
+import { QueueForm, IQueue } from "../types";
 
 
 const api = axios.create({
-    baseURL: `https://47c9-178-95-81-92.eu.ngrok.io/queues`,
+    baseURL: `https://queue-7m29dfsja-jaroslawtt.vercel.app/queues`,
 });
 
 

@@ -1,9 +1,9 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
-import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./src/answer-templates/templates";
+import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./answer-templates/templates";
 import { QueueForm, IQueue, AxiosErrorMessage } from "./types";
-import { getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./src/inline_keyboard";
-import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./src/api";
+import { getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./inline_keyboard";
+import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 
 config({ path: `.env` });
@@ -45,6 +45,7 @@ bot.onText(/\/create/, async msg => {
 });
 
 
+//call to cancel creating queue
 bot.onText(/\/cancel/, async msg => {
     if(msg.from && msg.from?.id === creatorId){
         creatorId = null;
@@ -70,7 +71,9 @@ bot.onText(/\/queues/, async msg => {
     }
 });
 
-bot.onText(/\/remove/, async msg => {
+
+//call to remove queue
+bot.onText(/\/delete/, async msg => {
     const chat_id = msg.chat.id;
     try {
         const queues = await fetchQueues(chat_id);
@@ -86,7 +89,7 @@ bot.onText(/\/remove/, async msg => {
 })
 
 
-//handling
+//handling queue data
 bot.on(`message`, async msg => {
     if(creatorId){
        if(msg.from && msg.from?.id === creatorId && msg.text && !RegExp(/\/+/).test(msg.text)){
@@ -172,7 +175,6 @@ bot.on(`callback_query`, async (msg) => {
                         break;
                 }
             } catch (e: any) {
-                console.log(e);
                 if (e?.response?.status === 403) {
                     const text: AxiosErrorMessage = e.response?.data?.message;
                     switch (text) {

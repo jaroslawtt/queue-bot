@@ -1,10 +1,6 @@
 {
   "version": 2,
   "public": true,
-  "env": {
-    "MOD_BOT_TOKEN": "@mod_bot_token",
-    "IS_WEB": "true"
-  },
   "routes": [
     {
       "src": "/",

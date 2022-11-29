@@ -3,9 +3,9 @@ import { IQueue } from "../../types";
 
 const enum AnswerTemplates {
     Greetings =
-`Привіт!
-Я допоможу тобі створити чергу.
-Розпочни командою`,
+`What's up✋.
+I can help you with creating queues🧑‍🤝‍🧑.
+Start with /create`,
     QueueExist = `Queue with this name already exists`,
 }
 

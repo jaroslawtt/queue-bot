@@ -28,7 +28,7 @@ const queueForm: QueueForm = {
 
 
 bot.onText(/\/start/, async msg => {
-    await bot.sendMessage(msg.chat.id, '', {
+    await bot.sendMessage(msg.chat.id, AnswerTemplates.Greetings, {
         parse_mode: `HTML`,
         disable_notification: true,
     });
@@ -73,12 +73,17 @@ bot.onText(/\/queues/, async msg => {
 
 bot.onText(/\/remove/, async msg => {
     const chat_id = msg.chat.id;
-    const queues = await fetchQueues(chat_id);
-    await bot.sendMessage(chat_id, getQueueStatsList(queues), {
-        reply_markup: {
-            inline_keyboard: getQueuesInlineKeyboard(queues, `delete`),
-        }
-    });
+    try {
+        const queues = await fetchQueues(chat_id);
+        await bot.sendMessage(chat_id, getQueueStatsList(queues), {
+            reply_markup: {
+                inline_keyboard: getQueuesInlineKeyboard(queues, `delete`),
+            }
+        });
+    }
+    catch {
+        await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
+    }
 })
 
 

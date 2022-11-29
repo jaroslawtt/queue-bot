@@ -17,7 +17,7 @@
     "typescript": "^4.9.3"
   },
   "scripts": {
-    "start": "ts-node app.ts",
+    "build": "ts-node app.ts",
     "start:dev": "nodemon app.ts yarn run start"
   }
 }

@@ -40,7 +40,6 @@ bot.onText(/\/create/, async msg => {
     queueForm.name = ``;
     queueForm.numberOfStudents = null;
     if(creatorId){
-        await bot.deleteMessage(msg.chat.id, msg.message_id);
         await bot.sendMessage(msg.chat.id, `Send a name for your queue`);
     }
 });

@@ -3,7 +3,7 @@ import { QueueForm, IQueue } from "../../types";
 
 
 const api = axios.create({
-    baseURL: `http://localhost:3333/queues`,
+    baseURL: `https://47c9-178-95-81-92.eu.ngrok.io/queues`,
 });
 
 

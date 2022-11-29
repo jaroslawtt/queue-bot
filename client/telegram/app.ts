@@ -40,10 +40,8 @@ bot.onText(/\/create/, async msg => {
     queueForm.name = ``;
     queueForm.numberOfStudents = null;
     if(creatorId){
-      /*  await bot.deleteMessage(msg.chat.id, msg.message_id);*/
-        await bot.sendMessage(msg.chat.id, `Send a name for your queue`, {
-            reply_to_message_id: msg.message_id,
-        });
+        await bot.deleteMessage(msg.chat.id, msg.message_id);
+        await bot.sendMessage(msg.chat.id, `Send a name for your queue`);
     }
 });
 
@@ -69,7 +67,7 @@ bot.onText(/\/queues/, async msg => {
         });
     }
     catch (e: any) {
-        console.log(e);
+        await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
     }
 });
 

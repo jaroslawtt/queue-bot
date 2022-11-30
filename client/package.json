@@ -18,7 +18,8 @@
     "typescript": "^4.9.3"
   },
   "scripts": {
-    "build": "tsc",
-    "start:dev": "nodemon src/app.ts yarn run start"
+    "build": "tsc pm2 start dist/app.js",
+    "start:dev": "nodemon src/app.ts yarn run start",
+    "start": "node dist/app.js"
   }
 }

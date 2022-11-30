@@ -3,7 +3,8 @@ import { QueueForm, IQueue } from "../types";
 
 
 const api = axios.create({
-    baseURL: `https://queue-7m29dfsja-jaroslawtt.vercel.app/queues`,
+    //baseURL: `https://queue-7m29dfsja-jaroslawtt.vercel.app/queues`,
+    baseURL: `http://localhost:3333/queues`
 });
 
 

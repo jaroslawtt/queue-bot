@@ -7,6 +7,7 @@ const enum AnswerTemplates {
 I can help you with creating queues🧑‍🤝‍🧑.
 Start with /create`,
     QueueExist = `Queue with this name already exists`,
+    CreationCanceled = `Creation process was canceled`,
 }
 
 export const enum AlertTemplates {

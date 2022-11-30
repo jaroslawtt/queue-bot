@@ -1,8 +1,8 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
 import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./answer-templates/templates";
-import { QueueForm, IQueue, AxiosErrorMessage } from "./types";
-import {getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard} from "./inline_keyboard";
+import { QueueForm, IQueue, CallbackQueryType, AxiosCustomException } from "./types";
+import { getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./inline_keyboard";
 import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 
@@ -49,10 +49,13 @@ bot.onText(/\/create/, async msg => {
 
 //call to cancel creating queue
 bot.onText(/\/cancel/, async msg => {
+    const chat_id = msg.chat.id;
     if(msg.from && msg.from?.id === creatorId){
         creatorId = null;
         queueForm.name = ``;
         queueForm.numberOfStudents = null;
+        await bot.sendMessage(chat_id,AnswerTemplates.CreationCanceled);
+        await bot.deleteMessage(chat_id, msg.message_id);
     }
 });
 
@@ -67,8 +70,9 @@ bot.onText(/\/queues/, async msg => {
                 inline_keyboard: getQueuesInlineKeyboard(queues, `control`),
             }
         });
+        await bot.deleteMessage(chat_id, msg.message_id);
     }
-    catch (e: any) {
+    catch (e: unknown) {
         await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
     }
 });
@@ -98,8 +102,9 @@ bot.on(`message`, async msg => {
                        }
                    });
                }
-               catch (e: any) {
-                   if(e.response.status === 403){
+               catch (e: unknown) {
+                   const { status } = (e as AxiosCustomException).response;
+                   if(status === 403){
                        await bot.sendMessage(msg.chat.id, AnswerTemplates.QueueExist, {
                            reply_to_message_id: msg.message_id,
                        });
@@ -121,15 +126,15 @@ bot.on(`message`, async msg => {
 
 bot.on(`callback_query`, async (msg) => {
     if(msg.data && msg.message) {
-        const type: string = msg.data.split("/")[0] || ``;
+        const type: CallbackQueryType = msg.data.split("/")[0] as CallbackQueryType;
         const turn: number = parseInt(msg?.data?.split("/")[1]) || 0;
         const queue_id: number = parseInt(msg?.data?.split("/")[2]);
         const username: string = msg?.from.first_name || ``;
         const message_id: number = msg.message.message_id;
         const chat_id: number = msg.message.chat.id;
         if (type) {
+            let queue: IQueue;
             try {
-                let queue: IQueue;
                 switch (type) {
                     case `turn`:
                         queue = await enqueueUser(msg.from.id, username, queue_id, turn);
@@ -179,22 +184,16 @@ bot.on(`callback_query`, async (msg) => {
                         });
                         break;
                 }
-            } catch (e: any) {
-                if (e?.response?.status === 403) {
-                    const text: AxiosErrorMessage = e.response?.data?.message;
-                    switch (text) {
-                        case "This queue doesn't exist anymore":
-                            await bot.deleteMessage(chat_id, message_id);
-                            await bot.answerCallbackQuery(msg.id, {
-                                text, show_alert: true,
-                            })
-                            break;
-                        default:
-                            await bot.answerCallbackQuery(msg.id, {
-                                text, show_alert: true,
-                            })
-                    }
-                } else {
+            } catch (e: unknown) {
+                const { status } = (e as AxiosCustomException).response;
+                const { message: text } = (e as AxiosCustomException).response.data;
+                if (status === 403) {
+                    await bot.answerCallbackQuery(msg.id, {
+                        text, show_alert: true,
+                    });
+                    if(text === `This queue doesn't exist anymore`) await bot.deleteMessage(chat_id, message_id);
+                }
+                else {
                     await bot.answerCallbackQuery(msg.id, {
                         text: AlertTemplates.DefaultAlert, show_alert: true,
                     });

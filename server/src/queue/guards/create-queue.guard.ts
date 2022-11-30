@@ -10,10 +10,11 @@ export class CreateQueueGuard implements CanActivate {
         context: ExecutionContext,
     ): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
-        const { queue_name, students_number }: QueueCreateDto = request.body;
-        const queue = await this.prisma.queue.findUnique({
+        const { queue_name, students_number, chat_id: chatId }: QueueCreateDto = request.body;
+        const queue = await this.prisma.queue.findFirst({
             where: {
                 queue_name,
+                chatId,
             }
         });
         if(queue) throw new ForbiddenException({

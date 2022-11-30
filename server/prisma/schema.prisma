@@ -17,7 +17,7 @@ model User {
 
 model Queue {
   queue_id        Int             @id @default(autoincrement())
-  queue_name      String          @unique
+  queue_name      String
   students_number Int
   created_at      DateTime        @default(now())
   users           UsersOnQueues[]

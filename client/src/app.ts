@@ -1,8 +1,8 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
 import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./answer-templates/templates";
-import {QueueForm, IQueue, AxiosErrorMessage, CallbackQueryType, AxiosCustomException} from "./types";
-import {getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard} from "./inline_keyboard";
+import { QueueForm, IQueue, CallbackQueryType, AxiosCustomException } from "./types";
+import { getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./inline_keyboard";
 import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 

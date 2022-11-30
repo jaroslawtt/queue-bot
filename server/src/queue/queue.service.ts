@@ -28,6 +28,7 @@ export class QueueService {
                         create: {
                             user_id,
                             username,
+                            is_admin: false,
                         }
                     }
                 }
@@ -79,6 +80,7 @@ export class QueueService {
                         create: {
                             user_id,
                             username,
+                            is_admin: false,
                         }
                     }
                 },
@@ -89,7 +91,8 @@ export class QueueService {
                 },
                 turn,
             }
-        })
+        });
+
         return await this.prisma.queue.findUnique({
             where: {
                 queue_id,

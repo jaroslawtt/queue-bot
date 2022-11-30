@@ -1,4 +1,4 @@
-import {Injectable, CanActivate, ExecutionContext, ForbiddenException} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from "../../prisma.service";
 import { QueueRemoveDto } from "../../../entities";
 
@@ -19,11 +19,10 @@ export class RemoveQueueGuard implements CanActivate {
                 host: true,
             }
         });
-        console.log(queue);
         if(!queue) throw new ForbiddenException({
             message: `This queue doesn't exist`,
         })
-        if(queue.host.user_id !== user_id){
+        if(queue.host?.user_id !== user_id){
             const user = await this.prisma.user.findUnique({
                 where: {
                     user_id,

@@ -31,3 +31,11 @@ export const getQueuesInlineKeyboard = (queues: Array<IQueue>, callback_data: st
     }
     return inlineKeyboard;
 };
+
+export const getQueueControlsInlineKeyboard = (queue_id: number) => {
+    const buttons: Array<Array<InlineKeyboardButton>> = [
+        [{text: `Queue list`, callback_data: `queue//${queue_id}`}, { text: `Delete queue`, callback_data: `delete//${queue_id}`}],
+        [{text: `Back`, callback_data: `back`}]
+    ];
+    return buttons;
+}

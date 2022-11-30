@@ -2,7 +2,7 @@ import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
 import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./answer-templates/templates";
 import { QueueForm, IQueue, AxiosErrorMessage } from "./types";
-import { getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./inline_keyboard";
+import {getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard} from "./inline_keyboard";
 import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 
@@ -40,7 +40,9 @@ bot.onText(/\/create/, async msg => {
     queueForm.name = ``;
     queueForm.numberOfStudents = null;
     if(creatorId){
-        await bot.sendMessage(msg.chat.id, `Send a name for your queue`);
+        await bot.sendMessage(msg.chat.id, `Send a name for your queue`, {
+            reply_to_message_id: msg.message_id,
+        });
     }
 });
 
@@ -62,7 +64,7 @@ bot.onText(/\/queues/, async msg => {
         const queues = await fetchQueues(chat_id);
         await bot.sendMessage(chat_id, getQueueStatsList(queues), {
             reply_markup: {
-                inline_keyboard: getQueuesInlineKeyboard(queues, `queue`),
+                inline_keyboard: getQueuesInlineKeyboard(queues, `control`),
             }
         });
     }
@@ -70,23 +72,6 @@ bot.onText(/\/queues/, async msg => {
         await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
     }
 });
-
-
-//call to remove queue
-bot.onText(/\/delete/, async msg => {
-    const chat_id = msg.chat.id;
-    try {
-        const queues = await fetchQueues(chat_id);
-        await bot.sendMessage(chat_id, getQueueStatsList(queues), {
-            reply_markup: {
-                inline_keyboard: getQueuesInlineKeyboard(queues, `delete`),
-            }
-        });
-    }
-    catch {
-        await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
-    }
-})
 
 
 //handling queue data
@@ -115,7 +100,9 @@ bot.on(`message`, async msg => {
                }
                catch (e: any) {
                    if(e.response.status === 403){
-                       await bot.sendMessage(msg.chat.id, AnswerTemplates.QueueExist);
+                       await bot.sendMessage(msg.chat.id, AnswerTemplates.QueueExist, {
+                           reply_to_message_id: msg.message_id,
+                       });
                        queueForm.name = ``;
                        queueForm.numberOfStudents = null;
                    }
@@ -164,6 +151,14 @@ bot.on(`callback_query`, async (msg) => {
                             chat_id,
                         })
                         break;
+                    case `control`:
+                        await bot.editMessageReplyMarkup({
+                            inline_keyboard: getQueueControlsInlineKeyboard(queue_id)
+                        }, {
+                            message_id,
+                            chat_id,
+                        });
+                        break;
                     case `queue`:
                         queue = await fetchQueue(queue_id);
                         await bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
@@ -172,6 +167,16 @@ bot.on(`callback_query`, async (msg) => {
                     case `delete`:
                         await removeQueue(queue_id, msg.from.id);
                         await bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
+                        break;
+                    case `back`:
+                        const queues = await fetchQueues(chat_id);
+                        await bot.editMessageText(getQueueStatsList(queues),{
+                            reply_markup: {
+                                inline_keyboard: getQueuesInlineKeyboard(queues, `control`),
+                            },
+                            chat_id,
+                            message_id,
+                        });
                         break;
                 }
             } catch (e: any) {

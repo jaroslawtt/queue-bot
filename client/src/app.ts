@@ -56,6 +56,7 @@ bot.onText(/\/cancel/, async msg => {
         queueForm.creatorId = null;
         queueForm.name = ``;
         queueForm.numberOfStudents = null;
+        queueForm.chatId = null;
         await bot.sendMessage(chat_id,AnswerTemplates.CreationCanceled);
         await bot.deleteMessage(chat_id, msg.message_id);
     }

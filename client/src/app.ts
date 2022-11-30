@@ -19,11 +19,12 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
     },
 });
 
-let creatorId: number | null = null;
 
 const queueForm: QueueForm = {
     name: ``,
     numberOfStudents: null,
+    creatorId: null,
+    chatId: null,
 }
 
 
@@ -36,10 +37,11 @@ bot.onText(/\/start/, async msg => {
 
 // call this to create queue
 bot.onText(/\/create/, async msg => {
-    creatorId = msg?.from?.id || null;
+    queueForm.creatorId = msg?.from?.id || null;
+    queueForm.chatId = msg.chat.id;
     queueForm.name = ``;
     queueForm.numberOfStudents = null;
-    if(creatorId){
+    if(queueForm.creatorId){
         await bot.sendMessage(msg.chat.id, `Send a name for your queue`, {
             reply_to_message_id: msg.message_id,
         });
@@ -50,8 +52,8 @@ bot.onText(/\/create/, async msg => {
 //call to cancel creating queue
 bot.onText(/\/cancel/, async msg => {
     const chat_id = msg.chat.id;
-    if(msg.from && msg.from?.id === creatorId){
-        creatorId = null;
+    if(msg.from && msg.from?.id === queueForm.creatorId && msg.chat?.id === queueForm.chatId){
+        queueForm.creatorId = null;
         queueForm.name = ``;
         queueForm.numberOfStudents = null;
         await bot.sendMessage(chat_id,AnswerTemplates.CreationCanceled);
@@ -73,6 +75,7 @@ bot.onText(/\/queues/, async msg => {
         await bot.deleteMessage(chat_id, msg.message_id);
     }
     catch (e: unknown) {
+        console.log(e);
         await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
     }
 });
@@ -80,8 +83,8 @@ bot.onText(/\/queues/, async msg => {
 
 //handling queue data
 bot.on(`message`, async msg => {
-    if(creatorId){
-       if(msg.from && msg.from?.id === creatorId && msg.text && !RegExp(/\/+/).test(msg.text)){
+    if(queueForm.creatorId && queueForm.chatId && msg.chat.id === queueForm.chatId) {
+       if(msg.from && msg.from?.id === queueForm.creatorId && msg.text && !RegExp(/\/+/).test(msg.text)){
            const { text } = msg;
            if(queueForm.name.length === 0){
                 queueForm.name = text;
@@ -93,7 +96,7 @@ bot.on(`message`, async msg => {
                queueForm.numberOfStudents = parseInt(text);
                const username: string = msg?.from.first_name || ``;
                try {
-                   const newQueue: IQueue = await createQueue(queueForm, creatorId, username, msg.chat.id);
+                   const newQueue: IQueue = await createQueue(queueForm, queueForm.creatorId, username, msg.chat.id);
                    const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
                    await bot.sendMessage(msg.chat.id, `${getQueueTurnsList(newQueue)}`, {
                        reply_markup: {

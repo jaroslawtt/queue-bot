@@ -5,6 +5,8 @@ import CallbackQuery = TelegramBot.CallbackQuery;
 export interface QueueForm {
     name: string;
     numberOfStudents: number | null;
+    creatorId: null | number;
+    chatId: null | number;
 }
 
 

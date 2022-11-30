@@ -28,11 +28,16 @@ export interface UserDataDetails {
     username: string,
 }
 
-export interface ICallbackQuery extends CallbackQuery{
-    data: string;
+export interface AxiosCustomException {
+    response: {
+        data: {
+            message: AxiosErrorMessage | string,
+        }
+        status: number,
+    }
 }
 
 export type AxiosErrorMessage = `User isn't in the queue` | `User is already in queue` | `The turn is already taken` | `This queue doesn't exist anymore`;
 
-export type CallbackQueryType = `turn` | `cancel`;
+export type CallbackQueryType = `turn` | `delete` | `back` | `control` | `queue` | `cancel`;
 

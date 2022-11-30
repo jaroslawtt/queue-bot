@@ -49,10 +49,13 @@ bot.onText(/\/create/, async msg => {
 
 //call to cancel creating queue
 bot.onText(/\/cancel/, async msg => {
+    const chat_id = msg.chat.id;
     if(msg.from && msg.from?.id === creatorId){
         creatorId = null;
         queueForm.name = ``;
         queueForm.numberOfStudents = null;
+        await bot.sendMessage(chat_id,AnswerTemplates.CreationCanceled);
+        await bot.deleteMessage(chat_id, msg.message_id);
     }
 });
 
@@ -67,6 +70,7 @@ bot.onText(/\/queues/, async msg => {
                 inline_keyboard: getQueuesInlineKeyboard(queues, `control`),
             }
         });
+        await bot.deleteMessage(chat_id, msg.message_id);
     }
     catch (e: unknown) {
         await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
@@ -129,8 +133,8 @@ bot.on(`callback_query`, async (msg) => {
         const message_id: number = msg.message.message_id;
         const chat_id: number = msg.message.chat.id;
         if (type) {
+            let queue: IQueue;
             try {
-                let queue: IQueue;
                 switch (type) {
                     case `turn`:
                         queue = await enqueueUser(msg.from.id, username, queue_id, turn);
@@ -183,21 +187,13 @@ bot.on(`callback_query`, async (msg) => {
             } catch (e: unknown) {
                 const { status } = (e as AxiosCustomException).response;
                 const { message: text } = (e as AxiosCustomException).response.data;
-                console.log(e);
                 if (status === 403) {
-                    switch (text) {
-                        case "This queue doesn't exist anymore":
-                            await bot.deleteMessage(chat_id, message_id);
-                            await bot.answerCallbackQuery(msg.id, {
-                                text, show_alert: true,
-                            })
-                            break;
-                        default:
-                            await bot.answerCallbackQuery(msg.id, {
-                                text, show_alert: true,
-                            })
-                    }
-                } else {
+                    await bot.answerCallbackQuery(msg.id, {
+                        text, show_alert: true,
+                    });
+                    if(text === `This queue doesn't exist anymore`) await bot.deleteMessage(chat_id, message_id);
+                }
+                else {
                     await bot.answerCallbackQuery(msg.id, {
                         text: AlertTemplates.DefaultAlert, show_alert: true,
                     });

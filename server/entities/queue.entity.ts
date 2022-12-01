@@ -11,6 +11,7 @@ export class QueueCreateDto extends QueueDto{
     @IsString()
     queue_name: string;
     @IsInt()
+    @IsOptional()
     students_number: number;
     @IsString()
     username: string;

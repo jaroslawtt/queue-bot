@@ -18,7 +18,7 @@ model User {
 model Queue {
   queue_id        Int             @id @default(autoincrement())
   queue_name      String
-  students_number Int
+  students_number Int             @default(34)
   created_at      DateTime        @default(now())
   users           UsersOnQueues[]
   host            User            @relation(fields: [hostId], references: [user_id])

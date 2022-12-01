@@ -39,3 +39,13 @@ export type AxiosErrorMessage = `User isn't in the queue` | `User is already in 
 
 export type CallbackQueryType = `turn` | `delete` | `back` | `control` | `queue` | `cancel`;
 
+
+export enum CallbackQueryTypeList{
+    Turn= 'turn',
+    Delete='delete',
+    Back='back',
+    Control='control',
+    Queue='queue',
+    Cancel='cancel',
+}
+

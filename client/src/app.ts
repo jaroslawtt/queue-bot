@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
 import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./answer-templates/templates";
-import { QueueForm, IQueue, CallbackQueryType, AxiosCustomException } from "./types";
+import {IQueue, CallbackQueryType, AxiosCustomException, CallbackQueryTypeList} from "./types";
 import { getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./inline_keyboard";
 import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
@@ -120,7 +120,7 @@ bot.on(`callback_query`, async (msg) => {
             let queue: IQueue;
             try {
                 switch (type) {
-                    case `turn`:
+                    case CallbackQueryTypeList.Turn:
                         queue = await enqueueUser(msg.from.id, username, queue_id, turn);
                         await bot.editMessageText(getQueueTurnsList(queue), {
                             reply_markup: {
@@ -130,7 +130,7 @@ bot.on(`callback_query`, async (msg) => {
                             chat_id,
                         })
                         break;
-                    case `cancel`:
+                    case CallbackQueryTypeList.Cancel:
                         queue = await dequeueUser(msg.from.id, queue_id);
                         await bot.editMessageText(getQueueTurnsList(queue), {
                             reply_markup: {
@@ -140,7 +140,7 @@ bot.on(`callback_query`, async (msg) => {
                             chat_id,
                         })
                         break;
-                    case `control`:
+                    case CallbackQueryTypeList.Control:
                         await bot.editMessageReplyMarkup({
                             inline_keyboard: getQueueControlsInlineKeyboard(queue_id)
                         }, {
@@ -148,16 +148,16 @@ bot.on(`callback_query`, async (msg) => {
                             chat_id,
                         });
                         break;
-                    case `queue`:
+                    case CallbackQueryTypeList.Queue:
                         queue = await fetchQueue(queue_id);
                         await bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
                         await bot.sendMessage(chat_id,`${getQueueTurnsList(queue)}`);
                         break;
-                    case `delete`:
+                    case CallbackQueryTypeList.Delete:
                         await removeQueue(queue_id, msg.from.id);
                         await bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
                         break;
-                    case `back`:
+                    case CallbackQueryTypeList.Back:
                         const queues = await fetchQueues(chat_id);
                         await bot.editMessageText(getQueueStatsList(queues),{
                             reply_markup: {

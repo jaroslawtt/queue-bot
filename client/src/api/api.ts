@@ -3,8 +3,8 @@ import { QueueForm, IQueue } from "../types";
 
 
 const api = axios.create({
-    baseURL: `https://queue-7m29dfsja-jaroslawtt.vercel.app/queues`,
-    //baseURL: `http://localhost:3333/queues`
+    //baseURL: `https://queue-7m29dfsja-jaroslawtt.vercel.app/queues`,
+    baseURL: `http://localhost:3333/queues`
 });
 
 
@@ -19,13 +19,16 @@ export const fetchQueue =  (queue_id: number): Promise<IQueue> => {
 }
 
 export const createQueue = (queueForm: QueueForm, user_id: number, username: string, chat_id: number): Promise<IQueue> => {
-    return api.post(``, {
-        queue_name: queueForm.name,
-        students_number: queueForm.numberOfStudents,
+    const { name: queue_name, numberOfStudents: students_number } = queueForm;
+    let data: Partial<any> = {
+        queue_name,
+        students_number,
         user_id,
         username,
         chat_id,
-    })
+    }
+    if(!students_number) delete data.students_number;
+    return api.post(``, data)
         .then(res => res.data);
 };
 

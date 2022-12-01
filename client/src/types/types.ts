@@ -1,12 +1,8 @@
-import TelegramBot from "../../local_modules/@types/node-telegram-bot-api";
-import CallbackQuery = TelegramBot.CallbackQuery;
 
 
 export interface QueueForm {
     name: string;
     numberOfStudents: number | null;
-    creatorId: null | number;
-    chatId: null | number;
 }
 
 

@@ -6,7 +6,7 @@ import { getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInline
 import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 
-config({ path: `.env` });
+config({ path: `./.env` });
 
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
@@ -20,13 +20,6 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
 });
 
 
-const queueForm: QueueForm = {
-    name: ``,
-    numberOfStudents: null,
-    creatorId: null,
-    chatId: null,
-}
-
 
 bot.onText(/\/start/, async msg => {
     await bot.sendMessage(msg.chat.id, AnswerTemplates.Greetings, {
@@ -35,32 +28,62 @@ bot.onText(/\/start/, async msg => {
     });
 });
 
-// call this to create queue
+
+// handling queue data
 bot.onText(/\/create/, async msg => {
-    queueForm.creatorId = msg?.from?.id || null;
-    queueForm.chatId = msg.chat.id;
-    queueForm.name = ``;
-    queueForm.numberOfStudents = null;
-    if(queueForm.creatorId){
-        await bot.sendMessage(msg.chat.id, `Send a name for your queue`, {
-            reply_to_message_id: msg.message_id,
-        });
-    }
-});
+    const message = await bot.sendMessage(msg.chat.id, `Send a name for your queue`, {
+        reply_to_message_id: msg.message_id,
+        reply_markup: {
+            force_reply: true,
+            selective: true,
+        }
+    });
+    const nameHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function nameHandler(msgg){
+        if(msgg.text && msgg.from?.id === msg.from?.id){
+            const name = msgg.text;
+            const message = await bot.sendMessage(msgg.chat.id, `Send number of students`, {
+                reply_to_message_id: msgg.message_id,
+                reply_markup: {
+                    force_reply: true,
+                    selective: true,
+                }
+            });
+            const numberHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function numberHandler(msg){
+                bot.removeReplyListener(nameHandlerId);
+                bot.removeReplyListener(numberHandlerId);
+                if(Number.isNaN(parseInt(msg.text as string))) await bot.sendMessage(msg.chat.id, AnswerTemplates.NotANumber);
+                else if(msg.text && msg.from && msg.from?.id === msgg.from?.id){
+                    const numberOfStudents = parseInt(msg.text);
+                    const username: string = msg.from.first_name || msg.from.username || ``;
+                    try {
+                        const newQueue: IQueue = await createQueue({
+                            name,
+                            numberOfStudents,
+                        }, msg.from.id, username, msg.chat.id);
+                        const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
+                        await bot.sendMessage(msg.chat.id, `${getQueueTurnsList(newQueue)}`, {
+                            reply_markup: {
+                                inline_keyboard: inlineKeyboard,
+                                resize_keyboard: true,
+                            }
+                        });
+                    }
+                    catch (e: unknown) {
+                        const { status } = (e as AxiosCustomException).response;
+                        const { message: text } = (e as AxiosCustomException).response.data;
+                        if(status === 403){
+                            await bot.sendMessage(msg.chat.id, text);
+                        }
+                        else{
+                            await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
+                        }
+                    }
+                }
+            });
+        }
+    });
+})
 
-
-//call to cancel creating queue
-bot.onText(/\/cancel/, async msg => {
-    const chat_id = msg.chat.id;
-    if(msg.from && msg.from?.id === queueForm.creatorId && msg.chat?.id === queueForm.chatId){
-        queueForm.creatorId = null;
-        queueForm.name = ``;
-        queueForm.numberOfStudents = null;
-        queueForm.chatId = null;
-        await bot.sendMessage(chat_id,AnswerTemplates.CreationCanceled);
-        await bot.deleteMessage(chat_id, msg.message_id);
-    }
-});
 
 
 //call this to see all available queues
@@ -76,53 +99,10 @@ bot.onText(/\/queues/, async msg => {
         await bot.deleteMessage(chat_id, msg.message_id);
     }
     catch (e: unknown) {
-        console.log(e);
         await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
     }
 });
 
-
-//handling queue data
-bot.on(`message`, async msg => {
-    if(queueForm.creatorId && queueForm.chatId && msg.chat.id === queueForm.chatId) {
-       if(msg.from && msg.from?.id === queueForm.creatorId && msg.text && !RegExp(/\/+/).test(msg.text)){
-           const { text } = msg;
-           if(queueForm.name.length === 0){
-                queueForm.name = text;
-                await bot.sendMessage(msg.chat.id, `Send number of students`, {
-                    reply_to_message_id: msg.message_id,
-                });
-           }
-           else if(!queueForm.numberOfStudents && !Number.isNaN(parseInt(text))){
-               queueForm.numberOfStudents = parseInt(text);
-               const username: string = msg?.from.first_name || ``;
-               try {
-                   const newQueue: IQueue = await createQueue(queueForm, queueForm.creatorId, username, msg.chat.id);
-                   const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
-                   await bot.sendMessage(msg.chat.id, `${getQueueTurnsList(newQueue)}`, {
-                       reply_markup: {
-                           inline_keyboard: inlineKeyboard,
-                           resize_keyboard: true,
-                       }
-                   });
-               }
-               catch (e: unknown) {
-                   const { status } = (e as AxiosCustomException).response;
-                   if(status === 403){
-                       await bot.sendMessage(msg.chat.id, AnswerTemplates.QueueExist, {
-                           reply_to_message_id: msg.message_id,
-                       });
-                       queueForm.name = ``;
-                       queueForm.numberOfStudents = null;
-                   }
-                   else{
-                       await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
-                   }
-               }
-           }
-       }
-    }
-});
 
 
 
@@ -206,5 +186,6 @@ bot.on(`callback_query`, async (msg) => {
     }
 }
 });
+
 
 

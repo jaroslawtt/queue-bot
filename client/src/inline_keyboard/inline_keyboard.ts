@@ -21,21 +21,32 @@ export const getTurnsInlineKeyboard = (queue: IQueue): Array<Array<InlineKeyboar
     return inlineKeyboard;
 };
 
-export const getQueuesInlineKeyboard = (queues: Array<IQueue>, callback_data: string): Array<Array<InlineKeyboardButton>> => {
+export const getQueuesInlineKeyboard = (queues: Array<IQueue>, callback_data: string, page?: number): Array<Array<InlineKeyboardButton>> => {
     const inlineKeyboard: Array<Array<InlineKeyboardButton>> = [];
     const button: Array<InlineKeyboardButton> = [];
     for (const queue of queues) {
-        button.push({text: queue.queue_name, callback_data: `${callback_data}//${queue.queue_id}`});
+        button.push({text: queue.queue_name, callback_data: `${callback_data}/${page}/${queue.queue_id}`});
         inlineKeyboard.push([...button]);
         button.splice(0,button.length);
     }
     return inlineKeyboard;
 };
 
-export const getQueueControlsInlineKeyboard = (queue_id: number) => {
+export const getQueueControlsInlineKeyboard = (queue_id: number, page: number) => {
     const buttons: Array<Array<InlineKeyboardButton>> = [
         [{text: `Queue list`, callback_data: `queue//${queue_id}`}, { text: `Delete queue`, callback_data: `delete//${queue_id}`}],
-        [{text: `Back`, callback_data: `back`}]
+        [{text: `Back`, callback_data: `back/${page}`}]
     ];
     return buttons;
-}
+};
+
+
+export const getPaginationControls = (length: number, limit: number, page: number) => {
+    const keys: Array<InlineKeyboardButton> = [];
+    if(page === 0){
+        if(length === limit) keys.push({ text: `➡`, callback_data: `page/${++page}`});
+    }
+    else if(length < limit) keys.push({ text: `⬅`, callback_data: `page/${--page}`});
+    else keys.push({ text: `⬅`, callback_data: `page/${page - 1}`}, { text: `➡`, callback_data: `page/${page + 1}`})
+    return [keys];
+};

@@ -3,15 +3,21 @@ import { QueueForm, IQueue } from "../types";
 
 
 const api = axios.create({
-    //baseURL: `https://queue-7m29dfsja-jaroslawtt.vercel.app/queues`,
-    baseURL: `http://localhost:3333/queues`
+    baseURL: `http://localhost:3333/queues` || process.env.API_LINK,
 });
 
 
-export const fetchQueues = (chat_id: number): Promise<Array<IQueue>> => {
+export const fetchQueues = (chat_id: number, limit?: number, page?: number): Promise<Array<IQueue>> => {
     return api.get(`/${chat_id}`, {
+        params: {
+            limit,
+            page,
+        }
     }).then(res => res.data);
-}
+};
+
+
+
 
 export const fetchQueue =  (queue_id: number): Promise<IQueue> => {
     return api.get(`/queue/${queue_id}`)

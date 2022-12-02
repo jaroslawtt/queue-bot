@@ -2,9 +2,15 @@ import { config } from "dotenv";
 import TelegramBot from "node-telegram-bot-api";
 import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./answer-templates/templates";
 import {IQueue, CallbackQueryType, AxiosCustomException, CallbackQueryTypeList} from "./types";
-import { getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./inline_keyboard";
+import {
+    getPaginationControls,
+    getQueueControlsInlineKeyboard,
+    getQueuesInlineKeyboard,
+    getTurnsInlineKeyboard
+} from "./inline_keyboard";
 import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
+import {QUEUE_LIMIT} from "./constants";
 
 config({ path: `./.env` });
 
@@ -69,8 +75,8 @@ bot.onText(/\/create/, async msg => {
                         });
                     }
                     catch (e: unknown) {
-                        const { status } = (e as AxiosCustomException).response;
-                        const { message: text } = (e as AxiosCustomException).response.data;
+                        const { status } = (e as AxiosCustomException)?.response;
+                        const { message: text } = (e as AxiosCustomException)?.response?.data;
                         if(status === 403){
                             await bot.sendMessage(msg.chat.id, text);
                         }
@@ -90,10 +96,11 @@ bot.onText(/\/create/, async msg => {
 bot.onText(/\/queues/, async msg => {
     const chat_id = msg.chat.id;
     try {
-        const queues = await fetchQueues(chat_id);
+        const queues = await fetchQueues(chat_id,QUEUE_LIMIT);
         await bot.sendMessage(chat_id, getQueueStatsList(queues), {
             reply_markup: {
-                inline_keyboard: getQueuesInlineKeyboard(queues, `control`),
+                inline_keyboard: getQueuesInlineKeyboard(queues, `control`)
+                    .concat(getPaginationControls(queues.length, QUEUE_LIMIT, 0)),
             }
         });
         await bot.deleteMessage(chat_id, msg.message_id);
@@ -118,6 +125,7 @@ bot.on(`callback_query`, async (msg) => {
         const chat_id: number = msg.message.chat.id;
         if (type) {
             let queue: IQueue;
+            let queues: Array<IQueue>;
             try {
                 switch (type) {
                     case CallbackQueryTypeList.Turn:
@@ -129,6 +137,16 @@ bot.on(`callback_query`, async (msg) => {
                             message_id,
                             chat_id,
                         })
+                        break;
+                    case CallbackQueryTypeList.Page:
+                        queues = await fetchQueues(chat_id,QUEUE_LIMIT,turn);
+                        await bot.editMessageReplyMarkup({
+                            inline_keyboard: getQueuesInlineKeyboard(queues,`control`)
+                                .concat(getPaginationControls(queues.length, QUEUE_LIMIT, turn)),
+                        }, {
+                            message_id,
+                            chat_id,
+                        });
                         break;
                     case CallbackQueryTypeList.Cancel:
                         queue = await dequeueUser(msg.from.id, queue_id);
@@ -142,7 +160,7 @@ bot.on(`callback_query`, async (msg) => {
                         break;
                     case CallbackQueryTypeList.Control:
                         await bot.editMessageReplyMarkup({
-                            inline_keyboard: getQueueControlsInlineKeyboard(queue_id)
+                            inline_keyboard: getQueueControlsInlineKeyboard(queue_id, turn)
                         }, {
                             message_id,
                             chat_id,
@@ -158,10 +176,11 @@ bot.on(`callback_query`, async (msg) => {
                         await bot.deleteMessage(msg.message.chat.id, msg.message.message_id);
                         break;
                     case CallbackQueryTypeList.Back:
-                        const queues = await fetchQueues(chat_id);
+                        queues = await fetchQueues(chat_id, QUEUE_LIMIT);
                         await bot.editMessageText(getQueueStatsList(queues),{
                             reply_markup: {
-                                inline_keyboard: getQueuesInlineKeyboard(queues, `control`),
+                                inline_keyboard: getQueuesInlineKeyboard(queues, `control`, turn)
+                                    .concat(getPaginationControls(queues.length, QUEUE_LIMIT, turn)),
                             },
                             chat_id,
                             message_id,
@@ -169,8 +188,8 @@ bot.on(`callback_query`, async (msg) => {
                         break;
                 }
             } catch (e: unknown) {
-                const { status } = (e as AxiosCustomException).response;
-                const { message: text } = (e as AxiosCustomException).response.data;
+                const status  = (e as AxiosCustomException).response.status;
+                const text = (e as AxiosCustomException).response?.data?.message;
                 if (status === 403) {
                     await bot.answerCallbackQuery(msg.id, {
                         text, show_alert: true,

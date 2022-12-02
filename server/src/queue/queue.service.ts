@@ -4,6 +4,7 @@ import { UserEnqueueDto, UserDequeueDto, QueueRemoveDto, QueueCreateDto, QueuesG
 
 
 
+
 BigInt.prototype[`toJSON`]= function () {
     return this.toString();
 };
@@ -39,7 +40,7 @@ export class QueueService {
         })
     }
 
-    async getAllQueues(chat_id){
+    async getQueues(chat_id, limit: number, page: number,){
         return await this.prisma.queue.findMany({
             where: {
                 chatId: BigInt(chat_id),
@@ -50,7 +51,9 @@ export class QueueService {
                         user: true,
                     }
                 },
-            }
+            },
+            take: Number.isNaN(limit) ? undefined : limit,
+            skip: Number.isNaN(page * limit) ? undefined : page * limit,
         });
     };
 

@@ -1,12 +1,8 @@
-import TelegramBot from "../../local_modules/@types/node-telegram-bot-api";
-import CallbackQuery = TelegramBot.CallbackQuery;
 
 
 export interface QueueForm {
     name: string;
     numberOfStudents: number | null;
-    creatorId: null | number;
-    chatId: null | number;
 }
 
 
@@ -41,5 +37,16 @@ export interface AxiosCustomException {
 
 export type AxiosErrorMessage = `User isn't in the queue` | `User is already in queue` | `The turn is already taken` | `This queue doesn't exist anymore`;
 
-export type CallbackQueryType = `turn` | `delete` | `back` | `control` | `queue` | `cancel`;
+export type CallbackQueryType = `turn` | `delete` | `back` | `control` | `queue` | `cancel` | 'page';
+
+
+export enum CallbackQueryTypeList{
+    Turn = 'turn',
+    Delete = 'delete',
+    Back = 'back',
+    Control = 'control',
+    Queue = 'queue',
+    Cancel = 'cancel',
+    Page = 'page'
+}
 

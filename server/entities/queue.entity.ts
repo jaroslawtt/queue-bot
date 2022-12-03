@@ -10,6 +10,7 @@ export class QueueDto {
 export class QueueCreateDto extends QueueDto{
     @IsString()
     queue_name: string;
+    @IsOptional()
     @IsInt()
     students_number: number;
     @IsString()

@@ -2,7 +2,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 
-import {QUEUE_LIMIT, START_PAGE} from "./constants";
+import { QUEUE_LIMIT, START_PAGE } from "./constants";
 
 import { config } from "dotenv";
 
@@ -43,30 +43,31 @@ bot.onText(/\/create/, async msg => {
             selective: true,
         }
     });
-    const nameHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function nameHandler(msgg){
-        if(msgg.text && msgg.from?.id === msg.from?.id){
-            const name = msgg.text;
-            const message = await bot.sendMessage(msgg.chat.id, `Send number of students`, {
-                reply_to_message_id: msgg.message_id,
+
+    const nameHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function nameHandler(nameMsg){
+        bot.removeReplyListener(nameHandlerId);
+        if(nameMsg.text && nameMsg.from?.id === msg.from?.id){
+            const name = nameMsg.text;
+            const message = await bot.sendMessage(nameMsg.chat.id, `Send number of students`, {
+                reply_to_message_id: nameMsg.message_id,
                 reply_markup: {
                     force_reply: true,
                     selective: true,
                 }
             });
-            const numberHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function numberHandler(msg){
-                bot.removeReplyListener(nameHandlerId);
+            const numberHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function numberHandler(numMsg){
                 bot.removeReplyListener(numberHandlerId);
-                if(Number.isNaN(parseInt(msg.text as string))) await bot.sendMessage(msg.chat.id, AnswerTemplates.NotANumber);
-                else if(msg.text && msg.from && msg.from?.id === msgg.from?.id){
-                    const numberOfStudents = parseInt(msg.text);
-                    const username: string = msg.from.first_name || msg.from.username || ``;
+                if(Number.isNaN(parseInt(numMsg.text as string))) await bot.sendMessage(numMsg.chat.id, AnswerTemplates.NotANumber);
+                else if(numMsg.text && numMsg.from && numMsg.from?.id === nameMsg.from?.id){
+                    const numberOfStudents = parseInt(numMsg.text);
+                    const username: string = numMsg.from.first_name || numMsg.from.username || ``;
                     try {
                         const newQueue: IQueue = await createQueue({
                             name,
                             numberOfStudents,
-                        }, msg.from.id, username, msg.chat.id);
+                        }, numMsg.from.id, username, numMsg.chat.id);
                         const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
-                        await bot.sendMessage(msg.chat.id, `${getQueueTurnsList(newQueue)}`, {
+                        await bot.sendMessage(numMsg.chat.id, `${getQueueTurnsList(newQueue)}`, {
                             reply_markup: {
                                 inline_keyboard: inlineKeyboard,
                                 resize_keyboard: true,
@@ -76,10 +77,10 @@ bot.onText(/\/create/, async msg => {
                         const { status } = (e as AxiosCustomException)?.response;
                         const { message: text } = (e as AxiosCustomException)?.response?.data;
                         if(status === 403){
-                            await bot.sendMessage(msg.chat.id, text);
+                            await bot.sendMessage(numMsg.chat.id, text);
                         }
                         else{
-                            await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
+                            await bot.sendMessage(numMsg.chat.id, AlertTemplates.DefaultAlert);
                         }
                     }
                 }

@@ -11,6 +11,7 @@ export interface IQueue {
     queue_name: string,
     students_number: number,
     created_at: Date,
+    host: Host,
     users: Array<User>
 }
 
@@ -19,6 +20,12 @@ export interface User {
     queue_id: string,
     turn: number,
     user: UserDataDetails,
+}
+
+export interface Host {
+    user_id: number,
+    username: string,
+    is_admin: boolean,
 }
 
 export interface UserDataDetails {

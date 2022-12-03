@@ -6,7 +6,12 @@ import { QUEUE_LIMIT, START_PAGE } from "./constants";
 
 import { config } from "dotenv";
 
-import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./answer-templates/templates";
+import AnswerTemplates, {
+    AlertTemplates,
+    getQueueProfileInfo,
+    getQueueStatsList,
+    getQueueTurnsList
+} from "./answer-templates/templates";
 import { IQueue, CallbackQueryType, AxiosCustomException, CallbackQueryTypeList } from "./types";
 import { getPaginationControls, getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./inline_keyboard";
 import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
@@ -112,9 +117,9 @@ bot.onText(/\/queues/, async msg => {
 bot.on(`callback_query`, async (msg) => {
     if(msg.data && msg.message) {
         const query: string = msg.data;
-        const type: CallbackQueryType = msg.data.split("/")[0] as CallbackQueryType;
-        const turn: number = parseInt(msg?.data?.split("/")[1]) || 0;
-        const queue_id: number = parseInt(msg?.data?.split("/")[2]);
+        const type: CallbackQueryType = query.split("/")[0] as CallbackQueryType;
+        const turn: number = parseInt(query.split("/")[1]) || 0;
+        const queue_id: number = parseInt(query.split("/")[2]);
         const username: string = msg?.from.first_name || ``;
         const message_id: number = msg.message.message_id;
         const chat_id: number = msg.message.chat.id;
@@ -155,9 +160,11 @@ bot.on(`callback_query`, async (msg) => {
                             })
                             break;
                         case CallbackQueryTypeList.Control:
-                            await bot.editMessageReplyMarkup({
-                                inline_keyboard: getQueueControlsInlineKeyboard(queue_id, turn)
-                            }, {
+                            queue = await fetchQueue(queue_id);
+                            await bot.editMessageText(getQueueProfileInfo(queue), {
+                                reply_markup: {
+                                    inline_keyboard:  getQueueControlsInlineKeyboard(queue_id, turn),
+                                },
                                 message_id,
                                 chat_id,
                             });

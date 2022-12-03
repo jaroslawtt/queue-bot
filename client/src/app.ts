@@ -2,7 +2,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 
-import { QUEUE_LIMIT } from "./constants";
+import {QUEUE_LIMIT, START_PAGE} from "./constants";
 
 import { config } from "dotenv";
 
@@ -96,8 +96,8 @@ bot.onText(/\/queues/, async msg => {
         const queues = await fetchQueues(chat_id,QUEUE_LIMIT);
         await bot.sendMessage(chat_id, getQueueStatsList(queues), {
             reply_markup: {
-                inline_keyboard: getQueuesInlineKeyboard(queues, `control`, 0)
-                    .concat(getPaginationControls(queues.length, QUEUE_LIMIT, 0)),
+                inline_keyboard: getQueuesInlineKeyboard(queues, `control`, START_PAGE)
+                    .concat(getPaginationControls(queues.length, QUEUE_LIMIT, START_PAGE)),
             }
         });
         await bot.deleteMessage(chat_id, msg.message_id);
@@ -134,10 +134,11 @@ bot.on(`callback_query`, async (msg) => {
                             break;
                         case CallbackQueryTypeList.Page:
                             queues = await fetchQueues(chat_id,QUEUE_LIMIT,turn);
-                            await bot.editMessageReplyMarkup({
-                                inline_keyboard: getQueuesInlineKeyboard(queues,`control`, turn)
-                                    .concat(getPaginationControls(queues.length, QUEUE_LIMIT, turn)),
-                            }, {
+                            await bot.editMessageText(getQueueStatsList(queues), {
+                                reply_markup: {
+                                    inline_keyboard: getQueuesInlineKeyboard(queues,`control`, turn)
+                                        .concat(getPaginationControls(queues.length, QUEUE_LIMIT, turn)),
+                                },
                                 message_id,
                                 chat_id,
                             });

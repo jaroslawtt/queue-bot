@@ -21,6 +21,7 @@ export const getTurnsInlineKeyboard = (queue: IQueue): Array<Array<InlineKeyboar
     return inlineKeyboard;
 };
 
+
 export const getQueuesInlineKeyboard = (queues: Array<IQueue>, callback_data: string, page?: number): Array<Array<InlineKeyboardButton>> => {
     const inlineKeyboard: Array<Array<InlineKeyboardButton>> = [];
     const button: Array<InlineKeyboardButton> = [];

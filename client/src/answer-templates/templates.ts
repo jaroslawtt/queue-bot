@@ -6,15 +6,11 @@ const enum AnswerTemplates {
 `What's up✋.
 I can help you with creating queues🧑‍🤝‍🧑.
 Start with /create`,
-    QueueExist = `Queue with this name already exists`,
+    QueueExist = `This queue doesn't exist anymore`,
     NotANumber = `You didn't provide a number`,
 }
 
 export const enum AlertTemplates {
-    TakenTurn = `This turn has been taken already`,
-    InQueue = `You are already in the queue`,
-    OutQueue = `You are not in the queue`,
-    QueueNotExist = `This queue doesn't exist anymore`,
     DefaultAlert = `Oops, sth went wrong...`,
 }
 

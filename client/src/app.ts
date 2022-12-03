@@ -2,11 +2,16 @@
 import TelegramBot from "node-telegram-bot-api";
 import InlineKeyboardButton = TelegramBot.InlineKeyboardButton;
 
-import {QUEUE_LIMIT, START_PAGE} from "./constants";
+import { QUEUE_LIMIT, START_PAGE } from "./constants";
 
 import { config } from "dotenv";
 
-import AnswerTemplates, { AlertTemplates, getQueueStatsList, getQueueTurnsList } from "./answer-templates/templates";
+import AnswerTemplates, {
+    AlertTemplates,
+    getQueueProfileInfo,
+    getQueueStatsList,
+    getQueueTurnsList
+} from "./answer-templates/templates";
 import { IQueue, CallbackQueryType, AxiosCustomException, CallbackQueryTypeList } from "./types";
 import { getPaginationControls, getQueueControlsInlineKeyboard, getQueuesInlineKeyboard, getTurnsInlineKeyboard } from "./inline_keyboard";
 import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQueue } from "./api";
@@ -43,30 +48,31 @@ bot.onText(/\/create/, async msg => {
             selective: true,
         }
     });
-    const nameHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function nameHandler(msgg){
-        if(msgg.text && msgg.from?.id === msg.from?.id){
-            const name = msgg.text;
-            const message = await bot.sendMessage(msgg.chat.id, `Send number of students`, {
-                reply_to_message_id: msgg.message_id,
+
+    const nameHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function nameHandler(nameMsg){
+        bot.removeReplyListener(nameHandlerId);
+        if(nameMsg.text && nameMsg.from?.id === msg.from?.id){
+            const name = nameMsg.text;
+            const message = await bot.sendMessage(nameMsg.chat.id, `Send number of students`, {
+                reply_to_message_id: nameMsg.message_id,
                 reply_markup: {
                     force_reply: true,
                     selective: true,
                 }
             });
-            const numberHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function numberHandler(msg){
-                bot.removeReplyListener(nameHandlerId);
+            const numberHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function numberHandler(numMsg){
                 bot.removeReplyListener(numberHandlerId);
-                if(Number.isNaN(parseInt(msg.text as string))) await bot.sendMessage(msg.chat.id, AnswerTemplates.NotANumber);
-                else if(msg.text && msg.from && msg.from?.id === msgg.from?.id){
-                    const numberOfStudents = parseInt(msg.text);
-                    const username: string = msg.from.first_name || msg.from.username || ``;
+                if(Number.isNaN(parseInt(numMsg.text as string))) await bot.sendMessage(numMsg.chat.id, AnswerTemplates.NotANumber);
+                else if(numMsg.text && numMsg.from && numMsg.from?.id === nameMsg.from?.id){
+                    const numberOfStudents = parseInt(numMsg.text);
+                    const username: string = numMsg.from.first_name || numMsg.from.username || ``;
                     try {
                         const newQueue: IQueue = await createQueue({
                             name,
                             numberOfStudents,
-                        }, msg.from.id, username, msg.chat.id);
+                        }, numMsg.from.id, username, numMsg.chat.id);
                         const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
-                        await bot.sendMessage(msg.chat.id, `${getQueueTurnsList(newQueue)}`, {
+                        await bot.sendMessage(numMsg.chat.id, `${getQueueTurnsList(newQueue)}`, {
                             reply_markup: {
                                 inline_keyboard: inlineKeyboard,
                                 resize_keyboard: true,
@@ -76,10 +82,10 @@ bot.onText(/\/create/, async msg => {
                         const { status } = (e as AxiosCustomException)?.response;
                         const { message: text } = (e as AxiosCustomException)?.response?.data;
                         if(status === 403){
-                            await bot.sendMessage(msg.chat.id, text);
+                            await bot.sendMessage(numMsg.chat.id, text);
                         }
                         else{
-                            await bot.sendMessage(msg.chat.id, AlertTemplates.DefaultAlert);
+                            await bot.sendMessage(numMsg.chat.id, AlertTemplates.DefaultAlert);
                         }
                     }
                 }
@@ -111,9 +117,9 @@ bot.onText(/\/queues/, async msg => {
 bot.on(`callback_query`, async (msg) => {
     if(msg.data && msg.message) {
         const query: string = msg.data;
-        const type: CallbackQueryType = msg.data.split("/")[0] as CallbackQueryType;
-        const turn: number = parseInt(msg?.data?.split("/")[1]) || 0;
-        const queue_id: number = parseInt(msg?.data?.split("/")[2]);
+        const type: CallbackQueryType = query.split("/")[0] as CallbackQueryType;
+        const turn: number = parseInt(query.split("/")[1]) || 0;
+        const queue_id: number = parseInt(query.split("/")[2]);
         const username: string = msg?.from.first_name || ``;
         const message_id: number = msg.message.message_id;
         const chat_id: number = msg.message.chat.id;
@@ -154,9 +160,11 @@ bot.on(`callback_query`, async (msg) => {
                             })
                             break;
                         case CallbackQueryTypeList.Control:
-                            await bot.editMessageReplyMarkup({
-                                inline_keyboard: getQueueControlsInlineKeyboard(queue_id, turn)
-                            }, {
+                            queue = await fetchQueue(queue_id);
+                            await bot.editMessageText(getQueueProfileInfo(queue), {
+                                reply_markup: {
+                                    inline_keyboard:  getQueueControlsInlineKeyboard(queue_id, turn),
+                                },
                                 message_id,
                                 chat_id,
                             });

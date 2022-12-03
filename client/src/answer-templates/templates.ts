@@ -41,4 +41,13 @@ export const getQueueStatsList = (queues: Array<IQueue>) => {
     return queuesList;
 }
 
+export const getQueueProfileInfo = (queue: IQueue) => {
+    return `
+Name: ${queue.queue_name}
+Turns: ${queue.students_number}
+Author: ${queue.host.username}
+Created: ${new Date(queue.created_at).toLocaleDateString()}     
+    `;
+}
+
 export default AnswerTemplates;

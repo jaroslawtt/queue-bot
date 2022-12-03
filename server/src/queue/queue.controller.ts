@@ -12,7 +12,6 @@ export class QueueController {
 
     @Get(`/:chatId`)
     getAllQueues(@Param(`chatId`) id, @Query(`page`) page: string, @Query(`limit`) limit: string,){
-        console.log(parseInt(limit));
         return this.queueService.getQueues(id,parseInt(limit),parseInt(page));
     }
 

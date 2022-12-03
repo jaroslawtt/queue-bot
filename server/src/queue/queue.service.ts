@@ -68,6 +68,7 @@ export class QueueService {
                         user: true,
                     }
                 },
+                host: true,
             }
         })
     }

@@ -19,10 +19,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:prod": "yarn run build && pm2 start dist/app.js",
     "start:dev": "nodemon src/app.ts yarn run start",
-    "start": "node dist/app.js",
-    "heroku-postbuild": "yarn run build"
+    "start": "node dist/app.js"
   },
   "engines": {
     "node": "18.0",

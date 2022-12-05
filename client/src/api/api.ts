@@ -3,7 +3,7 @@ import { QueueForm, IQueue } from "../types";
 
 
 const api = axios.create({
-    baseURL: process.env.API_LINK,
+    baseURL: process.env.API_LINK || '',
 });
 
 

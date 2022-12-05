@@ -19,23 +19,7 @@ import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQ
 
 config({ path: `./.env` });
 
-let bot: TelegramBot;
-
-if(process.env.NODE_ENV === 'production'){
-    bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string);
-    bot.setWebHook(`${process.env.HEROKU_URL}/` + process.env.TELEGRAM_BOT_TOKEN as string);
-}
-else {
-    bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string,{
-        polling:{
-            interval:300,
-            autoStart: true,
-            params:{
-                timeout:10,
-            }
-        },
-    });
-}
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string);
 
 
 bot.onText(/\/start/, async msg => {

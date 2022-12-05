@@ -21,10 +21,11 @@
     "build": "tsc",
     "build:prod": "yarn run build && pm2 start dist/app.js",
     "start:dev": "nodemon src/app.ts yarn run start",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+    "heroku-postbuild": "yarn run build"
   },
   "engines": {
     "node": "18.0",
-    "yarn": "1.20"
+    "yarn": "1.x"
   }
 }

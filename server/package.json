@@ -10,6 +10,11 @@
     "start": "nest start",
     "start:dev": "nest start --watch"
   },
+  "engines": {
+    "node": "19.0",
+    "yarn": "1.x",
+    "prisma": "4.6"
+  },
   "dependencies": {
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",

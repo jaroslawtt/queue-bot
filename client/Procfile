@@ -1,1 +1,1 @@
-worker: yarn build:prod
+worker: node dist/app.js

@@ -25,5 +25,6 @@
   "engines": {
     "node": "18.0",
     "yarn": "1.x"
-  }
+  },
+  "heroku-run-build-script": true
 }

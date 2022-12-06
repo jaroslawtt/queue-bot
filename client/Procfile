@@ -1,1 +1,1 @@
-worker: node dist/app.js
+worker: yan run start

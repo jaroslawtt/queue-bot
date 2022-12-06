@@ -17,7 +17,7 @@ export class IsQueueExistGuard implements CanActivate {
             }
         })
         if(!queue) throw new ForbiddenException({
-            message: `This queue doesn't exist anymore`,
+            message: `This queue doesn't exist`,
         });
         return true;
     }

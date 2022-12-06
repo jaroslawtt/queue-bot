@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import {ForbiddenException, Injectable} from '@nestjs/common';
 import { PrismaService } from "../prisma.service";
-import { UserEnqueueDto, UserDequeueDto, QueueRemoveDto, QueueCreateDto, QueuesGetDto} from "../../entities";
+import { UserEnqueueDto, UserDequeueDto, QueueRemoveDto, QueueCreateDto } from "../../entities";
 
 
 
@@ -58,7 +58,7 @@ export class QueueService {
     };
 
     async getQueue(queue_id?: number){
-        return await this.prisma.queue.findUnique({
+        const queue = await this.prisma.queue.findUnique({
             where: {
                 queue_id,
             },
@@ -70,7 +70,11 @@ export class QueueService {
                 },
                 host: true,
             }
-        })
+        });
+        if(!queue) throw new ForbiddenException({
+            message: `This queue doesn't exist`,
+        });
+        return queue;
     }
 
     async enqueueUser({ queue_id, user_id, username, turn }: UserEnqueueDto): Promise<any>{

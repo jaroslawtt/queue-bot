@@ -60,8 +60,9 @@ bot.onText(/\/create/, async msg => {
                 }
             });
             const numberHandlerId = bot.onReplyToMessage(message.chat.id, message.message_id, async function numberHandler(numMsg){
-                bot.removeReplyListener(numberHandlerId);
-                if(Number.isNaN(parseInt(numMsg.text as string))) await bot.sendMessage(numMsg.chat.id, AnswerTemplates.NotANumber);
+                const numberOfStudents: number = parseInt(numMsg.text as string);
+                if(Number.isNaN(numberOfStudents)) await bot.sendMessage(numMsg.chat.id, AnswerTemplates.NotANumber);
+                else if(numberOfStudents <= 0) await bot.sendMessage(numMsg.chat.id, AnswerTemplates.NegativeOrZero)
                 else if(numMsg.text && numMsg.from && numMsg.from?.id === nameMsg.from?.id){
                     const numberOfStudents = parseInt(numMsg.text);
                     const username: string = numMsg.from.first_name || numMsg.from.username || ``;
@@ -70,6 +71,7 @@ bot.onText(/\/create/, async msg => {
                             name,
                             numberOfStudents,
                         }, numMsg.from.id, username, numMsg.chat.id);
+                        bot.removeReplyListener(numberHandlerId);
                         const inlineKeyboard: Array<Array<InlineKeyboardButton>> = getTurnsInlineKeyboard(newQueue);
                         await bot.sendMessage(numMsg.chat.id, `${getQueueTurnsList(newQueue)}`, {
                             reply_markup: {

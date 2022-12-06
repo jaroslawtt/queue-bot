@@ -8,6 +8,7 @@ I can help you with creating queues🧑‍🤝‍🧑.
 Start with /create`,
     QueueExist = `This queue doesn't exist`,
     NotANumber = `You didn't provide a number`,
+    NegativeOrZero = `You passed negative or zero value`,
 }
 
 export const enum AlertTemplates {

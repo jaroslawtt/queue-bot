@@ -19,7 +19,15 @@ import { createQueue, dequeueUser, enqueueUser, fetchQueue, fetchQueues, removeQ
 
 config({ path: `./.env` });
 
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string);
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string, {
+    polling:{
+        interval:300,
+        autoStart: true,
+        params:{
+            timeout:10,
+        }
+    },
+});
 
 
 bot.onText(/\/start/, async msg => {
@@ -200,4 +208,10 @@ bot.on(`callback_query`, async (msg) => {
     }
 });
 
+process.once(`SIGINT`, () => bot.stopPolling({
+    reason: `SIGINT`
+}));
 
+process.once(`SIGTERM`, () => bot.stopPolling({
+    reason: `SIGTERM`
+}));

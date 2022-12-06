@@ -6,7 +6,7 @@ const enum AnswerTemplates {
 `What's up✋.
 I can help you with creating queues🧑‍🤝‍🧑.
 Start with /create`,
-    QueueExist = `This queue doesn't exist anymore`,
+    QueueExist = `This queue doesn't exist`,
     NotANumber = `You didn't provide a number`,
 }
 

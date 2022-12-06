@@ -1,1 +1,1 @@
-worker: yan run start
+worker: yarn run start

@@ -80,7 +80,7 @@ bot.onText(/\/create/, async msg => {
                             }
                         });
                     } catch (e: unknown) {
-                        const { status } = (e as AxiosCustomException)?.response;
+                        const { status } = (e as AxiosCustomException)?.response || 400;
                         const { message: text } = (e as AxiosCustomException)?.response?.data;
                         if(status === 403){
                             await bot.sendMessage(numMsg.chat.id, text);

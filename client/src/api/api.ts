@@ -1,11 +1,12 @@
 import axios from "axios";
+import { config } from "dotenv";
 import { QueueForm, IQueue } from "../types";
+config({ path: `./.env` });
 
 
 const api = axios.create({
-    baseURL: process.env.API_LINK || '',
+    baseURL: String(process.env.API_LINK),
 });
-
 
 export const fetchQueues = (chat_id: number, limit?: number, page?: number): Promise<Array<IQueue>> => {
     return api.get(`/${chat_id}`, {

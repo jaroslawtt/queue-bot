@@ -209,11 +209,3 @@ bot.on(`callback_query`, async (msg) => {
         }
     }
 });
-
-process.once(`SIGINT`, () => bot.stopPolling({
-    reason: `SIGINT`
-}));
-
-process.once(`SIGTERM`, () => bot.stopPolling({
-    reason: `SIGTERM`
-}));

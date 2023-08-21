@@ -22,7 +22,7 @@
     "start": "node dist/app.js"
   },
   "engines": {
-    "node": "18.x",
+    "node": "16.x",
     "yarn": "1.x"
   },
   "heroku-run-build-script": true

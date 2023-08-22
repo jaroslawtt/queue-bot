@@ -8,7 +8,8 @@
   "devDependencies": {
     "@types/node-telegram-bot-api": "./local_modules/@types/node-telegram-bot-api",
     "nodemon": "^2.0.20",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "pm2": "^5.3.0"
   },
   "dependencies": {
     "axios": "^1.1.3",
@@ -19,7 +20,7 @@
   "scripts": {
     "build": "tsc",
     "start:dev": "nodemon src/app.ts yarn run start",
-    "start": "node dist/app.js"
+    "start": "pm2 start ecosystem.config.js"
   },
   "engines": {
     "node": "16.x",

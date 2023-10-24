@@ -10,7 +10,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/src/main",
-    "sync-db": "npx prisma db push "
+    "sync-db": "prisma db push "
   },
   "engines": {
     "node": "16.x",

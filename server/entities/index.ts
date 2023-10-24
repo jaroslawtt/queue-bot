@@ -1,6 +1,2 @@
-
-
-
-
-export * from './user.entity';
-export * from './queue.entity'
+export * from "./user.entity";
+export * from "./queue.entity";

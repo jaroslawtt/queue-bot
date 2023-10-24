@@ -1,28 +1,36 @@
-import {Injectable, CanActivate, ExecutionContext, ForbiddenException} from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "../../prisma.service";
-import {QueueCreateDto, QueueDto} from "../../../entities";
+import { QueueCreateDto, QueueDto } from "../../../entities";
 
 @Injectable()
 export class CreateQueueGuard implements CanActivate {
-    constructor(private readonly prisma: PrismaService) {
-    }
-    async canActivate(
-        context: ExecutionContext,
-    ): Promise<boolean> {
-        const request = context.switchToHttp().getRequest();
-        const { queue_name, students_number, chat_id: chatId }: QueueCreateDto = request.body;
-        const queue = await this.prisma.queue.findFirst({
-            where: {
-                queue_name,
-                chatId,
-            }
-        });
-        if(queue) throw new ForbiddenException({
-            message: `The queue with this name already exists`
-        })
-        if(students_number > 40) throw new ForbiddenException({
-            message: `Number of students can't be higher than 40`,
-        })
-        return true;
-    }
+  constructor(private readonly prisma: PrismaService) {}
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const {
+      queue_name,
+      students_number,
+      chat_id: chatId,
+    }: QueueCreateDto = request.body;
+    const queue = await this.prisma.queue.findFirst({
+      where: {
+        queue_name,
+        chatId,
+      },
+    });
+    if (queue)
+      throw new ForbiddenException({
+        message: `The queue with this name already exists`,
+      });
+    if (students_number > 40)
+      throw new ForbiddenException({
+        message: `Number of students can't be higher than 40`,
+      });
+    return true;
+  }
 }

@@ -90,7 +90,7 @@ export class QueueService {
     username,
     turn,
     telegram_tag,
-  }: UserEnqueueDto): Promise<any> {
+  }: UserEnqueueDto) {
     await this.prisma.user.update({
       data: {
         username,
@@ -110,6 +110,7 @@ export class QueueService {
             create: {
               user_id,
               username,
+              telegram_tag,
               is_admin: false,
             },
           },

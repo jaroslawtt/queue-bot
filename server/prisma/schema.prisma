@@ -8,11 +8,12 @@ datasource db {
 }
 
 model User {
-  user_id  Int             @id @default(autoincrement())
-  username String
-  queues   UsersOnQueues[]
-  is_admin Boolean         @default(false)
-  Queue    Queue[]
+  user_id      Int             @id @default(autoincrement())
+  username     String
+  telegram_tag String?
+  queues       UsersOnQueues[]
+  is_admin     Boolean         @default(false)
+  Queue        Queue[]
 }
 
 model Queue {
@@ -23,7 +24,7 @@ model Queue {
   users           UsersOnQueues[]
   host            User            @relation(fields: [hostId], references: [user_id])
   hostId          Int
-  chatId BigInt
+  chatId          BigInt
 }
 
 model UsersOnQueues {

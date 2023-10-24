@@ -1,0 +1,13 @@
+{
+  "name": "queue-telegram-bot",
+  "version": "1.0.0",
+  "description": "Bot for creating queues using Telegram",
+  "scripts": {
+    "prettify": "prettier --write \"**/*.{ts,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.0.3"
+  },
+  "author": "",
+  "license": "MIT"
+}

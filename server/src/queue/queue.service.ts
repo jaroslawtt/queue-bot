@@ -91,8 +91,14 @@ export class QueueService {
     turn,
     telegram_tag,
   }: UserEnqueueDto) {
-    await this.prisma.user.update({
-      data: {
+    await this.prisma.user.upsert({
+      create: {
+        user_id,
+        username,
+        is_admin: false,
+        telegram_tag,
+      },
+      update: {
         username,
         telegram_tag,
       },

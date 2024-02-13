@@ -1,0 +1,1 @@
+export { MAX_QUEUE_PARTICIPATES_NUMBER } from './libs/constants.js';

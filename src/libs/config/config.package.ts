@@ -13,7 +13,7 @@ class Config implements IConfig {
   public constructor(logger: ILogger) {
     this.logger = logger;
 
-    config({ path: '.env'});
+    config({ path: '.env' });
 
     this.envSchema.load({});
     this.envSchema.validate({

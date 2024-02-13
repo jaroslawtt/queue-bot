@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc && tsc-alias",
     "start": "node ./build/index.js",
-    "start:dev": "nodemon --exec \"node --loader ts-paths-esm-loader\" src/index.ts"
+    "start:dev": "nodemon --exec \"node --loader ts-paths-esm-loader\" src/index.ts",
+    "prettify": "prettier --write \"**/*.{ts,json,md}\""
   },
   "repository": {
     "type": "git",

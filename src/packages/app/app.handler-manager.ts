@@ -7,10 +7,11 @@ class AppHandlerManager extends HandlerManager {
     super();
 
     this.addHandler(this.handleAppStart);
+
   }
 
   private handleAppStart: BotHandler = async (bot) => {
-    bot.onText(AppCommand.START, async msg => {
+    bot.onText(AppCommand.START, async (msg) => {
       await bot.sendMessage(msg.chat.id, 'Hello, world!');
     });
   };

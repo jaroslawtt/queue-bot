@@ -7,7 +7,6 @@ class AppHandlerManager extends HandlerManager {
     super();
 
     this.addHandler(this.handleAppStart);
-
   }
 
   private handleAppStart: BotHandler = async (bot) => {

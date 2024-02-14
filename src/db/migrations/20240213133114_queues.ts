@@ -23,7 +23,8 @@ export async function up(knex: Knex): Promise<void> {
       .notNullable()
       .defaultTo(32);
     table.integer(ColumnName.CHAT_ID).notNullable();
-    table.integer(ColumnName.CREATOR_ID)
+    table
+      .integer(ColumnName.CREATOR_ID)
       .unsigned()
       .references('telegram_id')
       .inTable(DatabaseTableName.USERS)

@@ -1,14 +1,20 @@
 import { QueueRepository } from '~/packages/queues/queue.repository.js';
 import { QueueCreateData } from '~/packages/queues/libs/types/queue-create-data.type.js';
 import { QueueEntity } from '~/packages/queues/queue.entity.js';
-import { QueueEnqueueUserData } from '~/packages/queues/libs/types/queue-enqueue-user-data.type';
-import { QueueUserEntity } from '~/packages/queues-users/queues-users.js';
-import { QueueDequeueUserData } from '~/packages/queues/libs/types/queue-dequeue-user-data.type';
+import { QueueEnqueueUserData } from '~/packages/queues/libs/types/queue-enqueue-user-data.type.js';
+import { QueueDequeueUserData } from '~/packages/queues/libs/types/queue-dequeue-user-data.type.js';
+import { QueueUserService } from '~/packages/queues-users/queue-user.service.js';
+import { QueueItem } from '~/packages/queues/libs/types/queue-item.type';
 
 class QueueService {
   private readonly queueRepository: QueueRepository;
-  public constructor(queueRepository: QueueRepository) {
+  private readonly queueUserService: QueueUserService;
+  public constructor(
+    queueRepository: QueueRepository,
+    queueUserService: QueueUserService,
+  ) {
     this.queueRepository = queueRepository;
+    this.queueUserService = queueUserService;
   }
 
   async create(data: QueueCreateData) {
@@ -33,25 +39,42 @@ class QueueService {
   async enqueue(enqueueUserData: QueueEnqueueUserData) {
     const { queueId, userId, turn } = enqueueUserData;
 
-    return void (await this.queueRepository.enqueue(
-      QueueUserEntity.initialize({
-        queueId,
-        userId,
-        turn,
-      }),
+    const isUserInQueue = !!(await this.queueUserService.find({
+      userId,
+      queueId,
+    }));
+
+    if (isUserInQueue) return console.log('User is in the queue');
+
+    const isTurnTaken = !!(await this.queueUserService.findByQueueIdAndTurn(
+      queueId,
+      turn,
     ));
+
+    if (isTurnTaken) return console.log('Turn is already taken');
+
+    return this.queueUserService.create({
+      queueId,
+      userId,
+      turn,
+    });
   }
 
   async dequeue(dequeueUserData: QueueDequeueUserData) {
     const { queueId, userId } = dequeueUserData;
 
-    return void (await this.queueRepository.dequeue(
-      QueueUserEntity.initialize({
-        queueId,
-        userId,
-        turn: null,
-      }),
-    ));
+    return this.queueUserService.delete({
+      queueId,
+      userId,
+    });
+  }
+
+  async find(id: number): Promise<QueueItem | null> {
+    const queue = await this.queueRepository.find(id);
+
+    if (!queue) return null;
+
+    return queue.toObject();
   }
 }
 

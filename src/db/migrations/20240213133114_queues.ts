@@ -19,7 +19,7 @@ export async function up(knex: Knex): Promise<void> {
     table
       .integer(ColumnName.TURNS)
       .checkPositive()
-      .checkBetween([0, MAX_QUEUE_PARTICIPATES_NUMBER])
+      .checkBetween([0])
       .notNullable()
       .defaultTo(32);
     table.integer(ColumnName.CHAT_ID).notNullable();

@@ -26,8 +26,6 @@ class BotApplication implements IBotApplication {
 
     this.config = config;
 
-    console.log(this.config.ENV);
-
     this.bot = new TelegramBot(this.config.ENV.APP.TELEGRAM_TOKEN, {
       polling: {
         autoStart: false,

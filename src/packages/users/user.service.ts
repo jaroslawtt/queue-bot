@@ -2,6 +2,7 @@ import { UserRepository } from '~/packages/users/user.repository.js';
 import {
   UserCreateData,
   UserItem,
+  UserItemWithTurn,
   UserUpdateData,
   UserUpdateDetailsData,
 } from '~/packages/users/libs/types/types.js';
@@ -57,6 +58,20 @@ class UserService {
     );
 
     return user.toObject();
+  }
+
+  async find(id: number): Promise<UserItem | null> {
+    const user = await this.userRepository.find(id);
+
+    if (!user) return null;
+
+    return user.toObject();
+  }
+
+  async findByQueueId(queueId: number): Promise<UserItemWithTurn[]> {
+    const users = await this.userRepository.findByQueueId(queueId);
+
+    return users.map((user) => user.toObjectWithTurn());
   }
 }
 

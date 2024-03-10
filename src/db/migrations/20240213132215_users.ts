@@ -13,7 +13,7 @@ const ColumnName = {
 
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable(DatabaseTableName.USERS, (table) => {
-    table.integer(ColumnName.TELEGRAM_ID).unique().notNullable().primary();
+    table.bigint(ColumnName.TELEGRAM_ID).unique().notNullable().primary();
     table.string(ColumnName.TELEGRAM_USERNAME, 255).notNullable();
     table.string(ColumnName.FIRST_NAME, 255).nullable();
     table.string(ColumnName.LAST_NAME, 255).nullable();

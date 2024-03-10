@@ -4,6 +4,7 @@ type UserItem = {
   lastName: string | null;
   telegramUsername: string;
   telegramTag: string | null;
+  isAllowedNotification: boolean;
 };
 
 export { type UserItem };

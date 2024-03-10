@@ -2,32 +2,21 @@ import type { Knex } from 'knex';
 import { DatabaseTableName } from '~/libs/database/database.js';
 
 const ColumnName = {
-  ID: 'id',
-  NAME: 'name',
+  USER_ID: 'user_id',
   CHAT_ID: 'chat_id',
-  TURNS: 'turns',
-  CREATOR_ID: 'creator_id',
   CREATED_AT: 'created_at',
   UPDATED_AT: 'updated_at',
 };
 
 export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable(DatabaseTableName.QUEUES, (table) => {
-    table.increments(ColumnName.ID).primary();
-    table.string(ColumnName.NAME, 255).notNullable();
+  return knex.schema.createTable(DatabaseTableName.USERS_CHATS, (table) => {
     table
-      .integer(ColumnName.TURNS)
-      .checkPositive()
-      .checkBetween([0])
-      .notNullable()
-      .defaultTo(32);
-    table.bigint(ColumnName.CHAT_ID).notNullable();
-    table
-      .integer(ColumnName.CREATOR_ID)
+      .bigint(ColumnName.USER_ID)
       .unsigned()
       .references('telegram_id')
       .inTable(DatabaseTableName.USERS)
       .onDelete('CASCADE');
+    table.bigint(ColumnName.CHAT_ID);
     table
       .dateTime(ColumnName.CREATED_AT)
       .notNullable()
@@ -36,9 +25,10 @@ export async function up(knex: Knex): Promise<void> {
       .dateTime(ColumnName.UPDATED_AT)
       .notNullable()
       .defaultTo(knex.fn.now());
+    table.primary([ColumnName.CHAT_ID, ColumnName.USER_ID]);
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTableIfExists(DatabaseTableName.QUEUES);
+  return knex.schema.dropTableIfExists(DatabaseTableName.USERS_CHATS);
 }

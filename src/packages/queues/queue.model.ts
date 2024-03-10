@@ -3,7 +3,7 @@ import { type QueueParticipatesRange } from '~/packages/queues/libs/types/queue-
 import { UserModel } from '~/packages/users/user.model.js';
 import { Model, RelationMappings } from 'objection';
 import { getJoinRelationPath } from '~/libs/helpers/helpers.js';
-import { QueueUserModel } from '~/packages/queues-users/queue-user.model';
+import { QueueUserModel } from '~/packages/queues-users/queue-user.model.js';
 
 class QueueModel extends AbstractModel {
   public 'id': number;
@@ -15,6 +15,8 @@ class QueueModel extends AbstractModel {
   public 'creatorId': number;
 
   public 'chatId': number;
+
+  public 'users': UserModel[];
 
   public static override get tableName(): string {
     return DatabaseTableName.QUEUES;

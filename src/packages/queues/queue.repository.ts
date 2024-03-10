@@ -11,43 +11,18 @@ class QueueRepository implements IRepository {
     this.queueModel = queueModel;
   }
 
-  async enqueue(payload: QueueUserEntity) {
-    const { queueId, userId, turn } = payload.toObject();
-
-    const queue = (await this.queueModel
-      .query()
-      .findById(queueId)) as QueueModel;
-
-    queue.$relatedQuery(this.usersRelationExpression).relate({
-      id: userId,
-      turn,
-    });
-  }
-
-  async dequeue(payload: QueueUserEntity) {
-    const { queueId, userId } = payload.toObject();
-
-    const queue = (await this.queueModel
-      .query()
-      .findById(queueId)) as QueueModel;
-
-    queue
-      .$relatedQuery(this.usersRelationExpression)
-      .unrelate()
-      .where('userId', userId);
-
-    return;
-  }
-
   async create(payload: QueueEntity): Promise<QueueEntity> {
     const { name, turns, chatId, creatorId } = payload.toNewObject();
 
-    const queue = await this.queueModel.query().insert({
-      name,
-      turns,
-      creatorId,
-      chatId,
-    });
+    const queue = await this.queueModel
+      .query()
+      .insert({
+        name,
+        turns,
+        creatorId,
+        chatId,
+      })
+      .returning('*');
 
     return QueueEntity.initialize({
       id: queue.id,

@@ -5,13 +5,21 @@ import {
   UserItemWithTurn,
   UserUpdateData,
   UserUpdateDetailsData,
+  UserUpdateNotificationDetailsType,
 } from '~/packages/users/libs/types/types.js';
 import { UserEntity } from '~/packages/users/user.entity.js';
+import { UserChatService } from '~/packages/users-chats/user-chat.service.js';
 
 class UserService {
   private readonly userRepository: UserRepository;
-  public constructor(userRepository: UserRepository) {
+  private readonly userChatService: UserChatService;
+
+  public constructor(
+    userRepository: UserRepository,
+    userChatService: UserChatService,
+  ) {
     this.userRepository = userRepository;
+    this.userChatService = userChatService;
   }
 
   async create(payload: UserCreateData): Promise<UserItem> {
@@ -32,28 +40,50 @@ class UserService {
     const { telegramId, telegramUsername, telegramTag } = payload;
 
     const user = await this.userRepository.update(
-      UserEntity.initialize({
+      UserEntity.initializeNew({
         telegramId,
         telegramUsername,
         telegramTag,
-        firstName: null,
-        lastName: null,
       }),
     );
 
     return user.toObject();
   }
 
+  async getUsersByChatId(
+    chatId: number,
+    isAllowedNotifications: boolean = false,
+  ): Promise<UserItem[]> {
+    const usersOnChat = await this.userRepository.getUsersByChatId(
+      chatId,
+      isAllowedNotifications,
+    );
+
+    return usersOnChat.map((userOnChat) => userOnChat.toObject());
+  }
+
   async updateUserDetails(payload: UserUpdateDetailsData): Promise<UserItem> {
     const { telegramId, firstName, lastName } = payload;
 
     const user = await this.userRepository.updateUserDetails(
-      UserEntity.initialize({
+      UserEntity.initializeForUserDetailsUpdate({
         telegramId,
         firstName,
         lastName,
-        telegramTag: null,
-        telegramUsername: '',
+      }),
+    );
+
+    return user.toObject();
+  }
+
+  async updateUserNotificationDetails(
+    payload: UserUpdateNotificationDetailsType,
+  ): Promise<UserItem> {
+    const { telegramId, isAllowedNotification } = payload;
+    const user = await this.userRepository.updateUserNotificationDetails(
+      UserEntity.initializeForUserNotificationUpdate({
+        telegramId,
+        isAllowedNotification,
       }),
     );
 
@@ -72,6 +102,45 @@ class UserService {
     const users = await this.userRepository.findByQueueId(queueId);
 
     return users.map((user) => user.toObjectWithTurn());
+  }
+
+  async associateUserWithChat({
+    chatId,
+    userId,
+  }: {
+    userId: number;
+    chatId: number;
+  }): Promise<void> {
+    const userOnChat = await this.userChatService.find({
+      chatId,
+      userId,
+    });
+
+    if (userOnChat) return;
+
+    return void this.userChatService.create({
+      chatId,
+      userId,
+    });
+  }
+
+  async dissociateUserWithChat({
+    chatId,
+    userId,
+  }: {
+    userId: number;
+    chatId: number;
+  }): Promise<void> {
+    const userOnChat = await this.userChatService.find({
+      chatId,
+      userId,
+    });
+
+    if (userOnChat) return;
+    return void this.userChatService.delete({
+      chatId,
+      userId,
+    });
   }
 }
 

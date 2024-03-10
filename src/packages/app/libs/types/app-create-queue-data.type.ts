@@ -5,8 +5,6 @@ type AppCreateQueueData = {
   turns: QueueParticipatesRange;
   chatId: number;
   creatorId: number;
-  creatorUsername: string;
-  creatorTag: string | null;
 };
 
 export { type AppCreateQueueData };

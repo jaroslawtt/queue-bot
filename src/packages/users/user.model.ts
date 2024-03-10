@@ -3,7 +3,8 @@ import { QueueModel } from '~/packages/queues/queue.model.js';
 import { Model, RelationMappings } from 'objection';
 import { getJoinRelationPath } from '~/libs/helpers/helpers.js';
 import { QueueUserModel } from '~/packages/queues-users/queue-user.model.js';
-import { QueueParticipatesRange } from '~/packages/queues/libs/types/queue-participates-range.type';
+import { type QueueParticipatesRange } from '~/packages/queues/libs/types/queue-participates-range.type.js';
+import { UserChatModel } from '~/packages/users-chats/user-chat.model.js';
 
 class UserModel extends AbstractModel {
   public 'telegramId': number;
@@ -18,7 +19,11 @@ class UserModel extends AbstractModel {
 
   public 'turn': QueueParticipatesRange;
 
+  public 'isAllowedNotification': boolean;
+
   public 'queues': QueueModel[];
+
+  public 'userOnChats': UserChatModel[];
 
   public static override get tableName(): string {
     return DatabaseTableName.USERS;
@@ -45,6 +50,20 @@ class UserModel extends AbstractModel {
             ),
           },
           to: getJoinRelationPath<QueueModel>(DatabaseTableName.QUEUES, 'id'),
+        },
+      },
+      userOnChats: {
+        relation: Model.HasManyRelation,
+        modelClass: UserChatModel,
+        join: {
+          from: getJoinRelationPath<UserModel>(
+            DatabaseTableName.USERS,
+            'telegramId',
+          ),
+          to: getJoinRelationPath<UserChatModel>(
+            DatabaseTableName.USERS_CHATS,
+            'userId',
+          ),
         },
       },
     };

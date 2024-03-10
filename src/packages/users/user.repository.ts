@@ -4,9 +4,11 @@ import { UserEntity } from '~/packages/users/user.entity.js';
 import { DatabaseTableName } from '~/libs/database/database.js';
 import { getJoinRelationPath } from '~/libs/helpers/helpers.js';
 import { QueueUserModel } from '~/packages/queues-users/queue-user.model.js';
+import { UserChatEntity } from '~/packages/users-chats/user-chat.entity.js';
 
 class UserRepository implements Omit<IRepository, 'findAll' | 'delete'> {
   private readonly queuesRelationExpression = 'queues';
+  private readonly userOnChatsRelationExpression = 'userOnChats';
   private readonly userModel: typeof UserModel;
 
   public constructor(userModel: typeof UserModel) {
@@ -31,6 +33,7 @@ class UserRepository implements Omit<IRepository, 'findAll' | 'delete'> {
       lastName: user.lastName,
       telegramUsername: user.telegramUsername,
       telegramTag: user.telegramTag,
+      isAllowedNotification: user.isAllowedNotification,
     });
   }
 
@@ -39,7 +42,10 @@ class UserRepository implements Omit<IRepository, 'findAll' | 'delete'> {
   }
 
   async find(id: number): Promise<UserEntity | null> {
-    const user = await this.userModel.query().findOne('telegramId', id);
+    const user = await this.userModel
+      .query()
+      .findOne('telegramId', id)
+      .returning('*');
 
     if (!user) return null;
 
@@ -49,6 +55,7 @@ class UserRepository implements Omit<IRepository, 'findAll' | 'delete'> {
       lastName: user.lastName,
       telegramUsername: user.telegramUsername,
       telegramTag: user.telegramTag,
+      isAllowedNotification: user.isAllowedNotification,
     });
   }
 
@@ -74,6 +81,7 @@ class UserRepository implements Omit<IRepository, 'findAll' | 'delete'> {
       lastName: user.lastName,
       telegramUsername: user.telegramUsername,
       telegramTag: user.telegramTag,
+      isAllowedNotification: user.isAllowedNotification,
     });
   }
 
@@ -112,6 +120,7 @@ class UserRepository implements Omit<IRepository, 'findAll' | 'delete'> {
         telegramUsername: user.telegramUsername,
         telegramTag: user.telegramTag,
         turn: user.turn,
+        isAllowedNotification: user.isAllowedNotification,
       }),
     );
   }
@@ -138,7 +147,63 @@ class UserRepository implements Omit<IRepository, 'findAll' | 'delete'> {
       lastName: user.lastName,
       telegramUsername: user.telegramUsername,
       telegramTag: user.telegramTag,
+      isAllowedNotification: user.isAllowedNotification,
     });
+  }
+
+  async updateUserNotificationDetails(
+    payload: UserEntity,
+  ): Promise<UserEntity> {
+    const { telegramId, isAllowedNotification } = payload.toObject();
+
+    await this.userModel
+      .query()
+      .patch({
+        isAllowedNotification,
+      })
+      .where('telegramId', telegramId);
+
+    const user = (await this.userModel
+      .query()
+      .findOne('telegramId', telegramId)
+      .returning('*')) as UserModel;
+
+    return UserEntity.initialize({
+      telegramId: user.telegramId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      telegramUsername: user.telegramUsername,
+      telegramTag: user.telegramTag,
+      isAllowedNotification: user.isAllowedNotification,
+    });
+  }
+
+  async getUsersByChatId(
+    chatId: number,
+    isOnlyAllowedNotifications: boolean = false,
+  ): Promise<UserEntity[]> {
+    const usersOnChat = await this.userModel
+      .query()
+      .select()
+      .whereExists(
+        UserModel.relatedQuery(this.userOnChatsRelationExpression).where(
+          'chatId',
+          chatId,
+        ),
+      )
+      .where('isAllowedNotification', isOnlyAllowedNotifications)
+      .returning('*');
+
+    return usersOnChat.map((userOnChat) =>
+      UserEntity.initialize({
+        telegramId: userOnChat.telegramId,
+        firstName: userOnChat.firstName,
+        lastName: userOnChat.lastName,
+        telegramUsername: userOnChat.telegramUsername,
+        telegramTag: userOnChat.telegramTag,
+        isAllowedNotification: userOnChat.isAllowedNotification,
+      }),
+    );
   }
 }
 

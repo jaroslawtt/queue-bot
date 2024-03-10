@@ -1,4 +1,4 @@
-import TelegramBot from 'node-telegram-bot-api';
+import TelegramBot, { ChatType } from 'node-telegram-bot-api';
 import { HandlerManager } from '~/libs/handler-manager/handler-manager.js';
 import { type BotHandler } from '~/libs/types/bot-handler.type.js';
 import {
@@ -27,18 +27,105 @@ class AppHandlerManager extends HandlerManager {
     this.addHandler(this.handleCreatingQueue);
 
     this.addHandler(this.handleCallbackQuery);
+
+    this.addHandler(this.handlePrivateChatManageNotifications);
+
+    this.addHandler(this.handleCancelGettingNotification);
+
+    this.addHandler(this.handleResumeGettingNotification);
   }
 
   private handleAppStart: BotHandler = async (bot) => {
     bot.onText(AppCommand.START, async (msg) => {
-      await bot.sendMessage(msg.chat.id, 'Hello, world!');
+      const telegramUser = msg.from;
+      if (!telegramUser) return;
+
+      const telegramTag = telegramUser.username;
+      const telegramUsername =
+        telegramUser.first_name + ' ' + telegramUser.last_name ?? '';
+
+      const user = await this.appService.findUser(telegramUser.id);
+
+      if (!user)
+        await this.appService.insertUser({
+          telegramId: telegramUser.id,
+          telegramUsername,
+          telegramTag: telegramTag ?? null,
+        });
+
+      if (msg.chat.type === 'private') {
+        await this.appService.allowUserGetNotifications(telegramUser.id);
+      }
+    });
+  };
+
+  private handleResumeGettingNotification: BotHandler = (bot) => {
+    bot.onText(AppCommand.RESUME, async (msg) => {
+      const telegramUser = msg.from;
+
+      if (!telegramUser || msg.chat.type !== 'private') return;
+
+      const telegramTag = telegramUser.username;
+      const telegramUsername =
+        telegramUser.first_name + ' ' + telegramUser.last_name ?? '';
+
+      const user = await this.appService.upsertUser({
+        telegramId: telegramUser.id,
+        telegramUsername,
+        telegramTag: telegramTag ?? null,
+      });
+
+      if (user.isAllowedNotification) {
+        await bot.sendMessage(
+          msg.chat.id,
+          AppAnswerTemplateEnum.USER_ALREADY_GET_NOTIFICATIONS,
+        );
+      } else {
+        await this.appService.allowUserGetNotifications(telegramUser.id);
+        await bot.sendMessage(
+          msg.chat.id,
+          AppAnswerTemplateEnum.GETTING_NOTIFICATIONS_ALLOWED,
+        );
+      }
+    });
+  };
+
+  private handleCancelGettingNotification: BotHandler = (bot) => {
+    bot.onText(AppCommand.STOP, async (msg) => {
+      const telegramUser = msg.from;
+
+      if (!telegramUser || msg.chat.type !== 'private') return;
+
+      const telegramTag = telegramUser.username;
+      const telegramUsername =
+        telegramUser.first_name + ' ' + telegramUser.last_name ?? '';
+
+      const user = await this.appService.upsertUser({
+        telegramId: telegramUser.id,
+        telegramUsername,
+        telegramTag: telegramTag ?? null,
+      });
+
+      if (!user.isAllowedNotification) {
+        await bot.sendMessage(
+          msg.chat.id,
+          AppAnswerTemplateEnum.USER_DOES_NOT_GET_NOTIFICATIONS,
+        );
+      } else {
+        await this.appService.forbidUserGetNotifications(telegramUser.id);
+        await bot.sendMessage(
+          msg.chat.id,
+          AppAnswerTemplateEnum.GETTING_NOTIFICATIONS_CANCELED,
+        );
+      }
     });
   };
 
   private handleCreatingQueue: BotHandler = async (bot) => {
     bot.onText(AppCommand.CREATE, async (msg) => {
+      const chatId = msg.chat.id;
       const botSendNameRequestMessage = await bot.sendMessage(
-        msg.chat.id,
+        chatId,
         AppAnswerTemplateEnum.REQUEST_QUEUE_NAME,
         {
           reply_to_message_id: msg.message_id,
@@ -49,7 +136,7 @@ class AppHandlerManager extends HandlerManager {
       );
 
       const nameRequestReplyHandlerId = bot.onReplyToMessage(
-        botSendNameRequestMessage.chat.id,
+        chatId,
         botSendNameRequestMessage.message_id,
         async (nameReplyMessage) => {
           const queueName = nameReplyMessage.text;
@@ -58,8 +145,8 @@ class AppHandlerManager extends HandlerManager {
           bot.removeReplyListener(nameRequestReplyHandlerId);
 
           const numberOfParticipantsRequestMessage = await bot.sendMessage(
-            msg.chat.id,
-            AppAnswerTemplateEnum.REQUEST_STUDENT_NUMBER,
+            chatId,
+            AppAnswerTemplateEnum.REQUEST_PARTICIPANTS_NUMBER,
             {
               reply_markup: {
                 force_reply: true,
@@ -68,7 +155,7 @@ class AppHandlerManager extends HandlerManager {
           );
 
           const numberOfParticipantsReplyHandlerId = bot.onReplyToMessage(
-            numberOfParticipantsRequestMessage.chat.id,
+            chatId,
             numberOfParticipantsRequestMessage.message_id,
             async (numberOfParticipantsReplyMessage) => {
               if (!(numberOfParticipantsReplyMessage.from?.id === msg.from?.id))
@@ -86,7 +173,7 @@ class AppHandlerManager extends HandlerManager {
 
               if (Number.isNaN(numberOfParticipants)) {
                 const botAlertMessageId = await bot.sendMessage(
-                  msg.chat.id,
+                  chatId,
                   AppAnswerTemplateEnum.NOT_A_NUMBER,
                   {
                     reply_to_message_id:
@@ -112,7 +199,7 @@ class AppHandlerManager extends HandlerManager {
 
               if (numberOfParticipants <= 0)
                 return await bot.sendMessage(
-                  msg.chat.id,
+                  chatId,
                   AppAnswerTemplateEnum.NEGATIVE_VALUE,
                   {
                     reply_to_message_id:
@@ -122,7 +209,7 @@ class AppHandlerManager extends HandlerManager {
 
               if (numberOfParticipants > MAX_QUEUE_PARTICIPATES_NUMBER)
                 return await bot.sendMessage(
-                  msg.chat.id,
+                  chatId,
                   AppAnswerTemplateEnum.NUMBER_IS_HIGHER_THAN_MAX,
                   {
                     reply_to_message_id:
@@ -148,17 +235,23 @@ class AppHandlerManager extends HandlerManager {
                 ),
               ]);
 
+              const creator = await this.appService.upsertUser({
+                telegramId: telegramUser.id,
+                telegramUsername,
+                telegramTag: telegramTag ?? null,
+              });
+
+              await this.appService.associateUserWithChat({
+                userId: telegramUser.id,
+                chatId: msg.chat.id,
+              });
+
               const queue = await this.appService.createQueue({
                 name: queueName,
                 turns: numberOfParticipants as QueueParticipatesRange,
                 chatId: msg.chat.id,
-                creatorId: telegramUser.id,
-                creatorUsername: telegramUsername,
-                creatorTag: telegramTag ?? null,
+                creatorId: creator.telegramId,
               });
-              const creator = (await this.appService.findUser(
-                queue.creatorId,
-              )) as UserItem;
 
               const { template, inlineKeyboard } =
                 this.appService.generateQueueListData({
@@ -166,16 +259,55 @@ class AppHandlerManager extends HandlerManager {
                   creator,
                 });
 
-              return await bot.sendMessage(msg.chat.id, template, {
+              const queueMessage = await bot.sendMessage(chatId, template, {
                 reply_markup: {
                   inline_keyboard: inlineKeyboard,
                 },
                 parse_mode: 'HTML',
               });
+
+              const chat = await bot.getChat(chatId);
+
+              const usersOnChatWithAllowedNotifications =
+                await this.appService.getUsersByChatId(chatId, true);
+
+              await this.sendNotificationUsers({
+                bot,
+                users: usersOnChatWithAllowedNotifications.filter(
+                  (userOnChatWithAllowedNotifications) =>
+                    userOnChatWithAllowedNotifications.telegramId !==
+                    creator.telegramId,
+                ),
+                chatId,
+                messageId: queueMessage.message_id,
+                chatType: queueMessage.chat.type,
+                queueTitle: queue.name,
+                username: `${creator.telegramTag ? '@' + creator.telegramTag : creator.telegramUsername}`,
+                chatTitle: chat.title,
+              });
             },
           );
         },
       );
+    });
+  };
+
+  private handlePrivateChatManageNotifications: BotHandler = async (bot) => {
+    bot.onText(AppCommand.MANAGE, async (msg) => {
+      if (msg.chat.type !== 'private' || !msg.from) return;
+
+      const telegramUser = msg.from;
+      const telegramTag = telegramUser.username;
+      const telegramUsername =
+        telegramUser.first_name + ' ' + telegramUser.last_name ?? '';
+
+      const user = await this.appService.upsertUser({
+        telegramId: telegramUser.id,
+        telegramTag: telegramTag ?? null,
+        telegramUsername,
+      });
+
+      await bot.sendMessage(msg.chat.id, 'Hello, manage');
     });
   };
 
@@ -191,13 +323,20 @@ class AppHandlerManager extends HandlerManager {
       const telegramTag = msg.from.username ?? null;
       const telegramUsername = `${msg.from.first_name}${msg.from.last_name ? ' ' + msg.from.last_name : ''}`;
 
-      await this.appService.upsertUser({
+      const user = await this.appService.upsertUser({
         telegramId: userId,
         telegramTag,
         telegramUsername,
       });
 
+      console.log(user);
+
       if (!messageId || !chatId) return;
+
+      await this.appService.associateUserWithChat({
+        userId,
+        chatId,
+      });
 
       switch (action) {
         case AppCallbackQueryActionType.TURN: {
@@ -214,6 +353,7 @@ class AppHandlerManager extends HandlerManager {
           const creator = (await this.appService.findUser(
             queue.creatorId,
           )) as UserItem;
+
           const usersWithTurns =
             await this.appService.findQueueParticipants(queueId);
 
@@ -277,6 +417,60 @@ class AppHandlerManager extends HandlerManager {
       }
     });
   };
+
+  private async sendNotificationUsers({
+    bot,
+    users,
+    chatId,
+    chatType,
+    messageId,
+    chatTitle,
+    queueTitle,
+    username,
+  }: {
+    bot: TelegramBot;
+    chatId: number;
+    users: UserItem[];
+    messageId: number;
+    chatType: ChatType;
+    chatTitle: string | undefined;
+    queueTitle: string;
+    username: string;
+  }) {
+    for (const user of users) {
+      try {
+        const chatMember = await bot.getChatMember(chatId, user.telegramId);
+
+        if (!chatMember) return;
+
+        const messageLink = this.appService.generateMessageLink({
+          chatId,
+          messageId,
+          chatType,
+        });
+
+        await bot.sendMessage(
+          user.telegramId,
+          this.appService.generateNotificationMessage({
+            messageLink,
+            queueTitle,
+            chatTitle,
+            username,
+          }),
+          {
+            parse_mode: 'HTML',
+          },
+        );
+      } catch {
+        await this.appService.dissociateUserWithChat({
+          userId: user.telegramId,
+          chatId,
+        });
+      }
+    }
+
+    return;
+  }
 }
 
 export { AppHandlerManager };

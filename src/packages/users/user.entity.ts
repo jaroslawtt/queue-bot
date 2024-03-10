@@ -14,6 +14,8 @@ class UserEntity implements IEntity {
 
   private readonly 'turn': QueueParticipatesRange | null;
 
+  private readonly 'isAllowedNotification': boolean | null;
+
   private constructor({
     telegramId,
     firstName,
@@ -21,6 +23,7 @@ class UserEntity implements IEntity {
     telegramUsername,
     telegramTag,
     turn,
+    isAllowedNotification,
   }: {
     telegramId: number | null;
     firstName: string | null;
@@ -28,6 +31,7 @@ class UserEntity implements IEntity {
     telegramUsername: string | null;
     telegramTag: string | null;
     turn: QueueParticipatesRange | null;
+    isAllowedNotification: boolean | null;
   }) {
     this.telegramId = telegramId;
     this.firstName = firstName;
@@ -35,6 +39,7 @@ class UserEntity implements IEntity {
     this.telegramUsername = telegramUsername;
     this.telegramTag = telegramTag;
     this.turn = turn;
+    this.isAllowedNotification = isAllowedNotification;
   }
 
   public static initialize({
@@ -43,12 +48,14 @@ class UserEntity implements IEntity {
     lastName,
     telegramUsername,
     telegramTag,
+    isAllowedNotification,
   }: {
     telegramId: number;
     firstName: string | null;
     lastName: string | null;
     telegramUsername: string;
     telegramTag: string | null;
+    isAllowedNotification: boolean;
   }) {
     return new UserEntity({
       telegramId,
@@ -57,6 +64,7 @@ class UserEntity implements IEntity {
       telegramUsername,
       telegramTag,
       turn: null,
+      isAllowedNotification,
     });
   }
 
@@ -76,6 +84,45 @@ class UserEntity implements IEntity {
       telegramUsername,
       telegramTag,
       turn: null,
+      isAllowedNotification: null,
+    });
+  }
+
+  public static initializeForUserDetailsUpdate({
+    telegramId,
+    firstName,
+    lastName,
+  }: {
+    telegramId: number;
+    firstName: string | null;
+    lastName: string | null;
+  }) {
+    return new UserEntity({
+      telegramId,
+      telegramUsername: null,
+      telegramTag: null,
+      firstName,
+      lastName,
+      turn: null,
+      isAllowedNotification: null,
+    });
+  }
+
+  public static initializeForUserNotificationUpdate({
+    telegramId,
+    isAllowedNotification,
+  }: {
+    telegramId: number;
+    isAllowedNotification: boolean;
+  }) {
+    return new UserEntity({
+      telegramId,
+      telegramUsername: null,
+      telegramTag: null,
+      firstName: null,
+      lastName: null,
+      turn: null,
+      isAllowedNotification,
     });
   }
 
@@ -86,6 +133,7 @@ class UserEntity implements IEntity {
     telegramUsername,
     telegramTag,
     turn,
+    isAllowedNotification,
   }: {
     telegramId: number;
     firstName: string | null;
@@ -93,6 +141,7 @@ class UserEntity implements IEntity {
     telegramUsername: string;
     telegramTag: string | null;
     turn: QueueParticipatesRange;
+    isAllowedNotification: boolean;
   }) {
     return new UserEntity({
       telegramId,
@@ -101,6 +150,7 @@ class UserEntity implements IEntity {
       telegramUsername,
       telegramTag,
       turn,
+      isAllowedNotification,
     });
   }
 
@@ -122,6 +172,7 @@ class UserEntity implements IEntity {
     lastName: string | null;
     telegramUsername: string;
     telegramTag: string | null;
+    isAllowedNotification: boolean;
   } {
     return {
       telegramId: this.telegramId as number,
@@ -129,6 +180,7 @@ class UserEntity implements IEntity {
       lastName: this.lastName as string | null,
       telegramUsername: this.telegramUsername as string,
       telegramTag: this.telegramTag as string | null,
+      isAllowedNotification: this.isAllowedNotification as boolean,
     };
   }
 
@@ -139,6 +191,7 @@ class UserEntity implements IEntity {
     telegramUsername: string;
     telegramTag: string | null;
     turn: QueueParticipatesRange;
+    isAllowedNotification: boolean;
   } {
     return {
       telegramId: this.telegramId as number,
@@ -147,6 +200,7 @@ class UserEntity implements IEntity {
       telegramUsername: this.telegramUsername as string,
       telegramTag: this.telegramTag as string | null,
       turn: this.turn as QueueParticipatesRange,
+      isAllowedNotification: this.isAllowedNotification as boolean,
     };
   }
 }

@@ -16,6 +16,8 @@ class QueueModel extends AbstractModel {
 
   public 'chatId': number;
 
+  public 'messageId': number | null;
+
   public 'users': UserModel[];
 
   public static override get tableName(): string {

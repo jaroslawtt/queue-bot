@@ -4,6 +4,7 @@ import { ILogger } from '~/libs/logger/libs/interfaces/logger.interface.js';
 import { IDatabase } from '~/libs/database/libs/interfaces/database.interface.js';
 import { IBotApplication } from '~/libs/bot-application/libs/interfaces/bot-application.interface.js';
 import { type BotHandler } from '~/libs/types/bot-handler.type.js';
+import { ApplicationError } from '~/libs/exceptions/exceptions';
 type Constructor = {
   config: IConfig;
   handlers: BotHandler[];

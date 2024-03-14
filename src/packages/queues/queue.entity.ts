@@ -12,7 +12,11 @@ class QueueEntity implements IEntity {
 
   private readonly 'creatorId': number | null;
 
+  private readonly 'messageId': number | null;
+
   private readonly 'createdAt': string | null;
+
+  private readonly 'updatedAt': string | null;
 
   private constructor({
     id,
@@ -20,21 +24,27 @@ class QueueEntity implements IEntity {
     turns,
     chatId,
     creatorId,
+    messageId,
     createdAt,
+    updatedAt,
   }: {
     id: number | null;
     name: string | null;
     turns: QueueParticipatesRange | null;
     chatId: number | null;
     creatorId: number | null;
+    messageId: number | null;
     createdAt: string | null;
+    updatedAt: string | null;
   }) {
     this.id = id;
     this.name = name;
     this.turns = turns;
     this.chatId = chatId;
     this.creatorId = creatorId;
+    this.messageId = messageId;
     this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   public static initialize({
@@ -43,14 +53,18 @@ class QueueEntity implements IEntity {
     turns,
     chatId,
     creatorId,
+    messageId,
     createdAt,
+    updatedAt,
   }: {
     id: number;
     name: string;
     turns: QueueParticipatesRange;
     chatId: number;
     creatorId: number;
-    createdAt: string;
+    messageId: number | null;
+    createdAt: string | null;
+    updatedAt: string | null;
   }) {
     return new QueueEntity({
       id,
@@ -58,7 +72,9 @@ class QueueEntity implements IEntity {
       turns,
       chatId,
       creatorId,
+      messageId,
       createdAt,
+      updatedAt,
     });
   }
 
@@ -79,7 +95,9 @@ class QueueEntity implements IEntity {
       turns,
       chatId,
       creatorId,
+      messageId: null,
       createdAt: null,
+      updatedAt: null,
     });
   }
 
@@ -89,7 +107,9 @@ class QueueEntity implements IEntity {
     turns: QueueParticipatesRange;
     chatId: number;
     creatorId: number;
+    messageId: number | null;
     createdAt: string;
+    updatedAt: string;
   } {
     return {
       id: this.id as number,
@@ -97,7 +117,9 @@ class QueueEntity implements IEntity {
       turns: this.turns as QueueParticipatesRange,
       chatId: this.chatId as number,
       creatorId: this.creatorId as number,
+      messageId: this.messageId as number | null,
       createdAt: this.createdAt as string,
+      updatedAt: this.updatedAt as string,
     };
   }
   toNewObject(): {

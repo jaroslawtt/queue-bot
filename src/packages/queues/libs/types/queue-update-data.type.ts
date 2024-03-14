@@ -1,14 +1,12 @@
 import { QueueParticipatesRange } from '~/packages/queues/libs/types/queue-participates-range.type.js';
 
-type QueueItem = {
+type QueueUpdateData = {
   id: number;
   name: string;
   turns: QueueParticipatesRange;
   chatId: number;
+  messageId: number;
   creatorId: number;
-  messageId: number | null;
-  createdAt: string;
-  updatedAt: string;
 };
 
-export { type QueueItem };
+export { type QueueUpdateData };

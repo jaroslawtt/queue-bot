@@ -1,9 +1,9 @@
 const AppCommand = {
   START: /\/start/,
   CREATE: /\/create/,
-  MANAGE: /\/manage/,
   STOP: /\/stop/,
   RESUME: /\/resume/,
+  QUEUES: /\/queues/,
 } as const;
 
 export { AppCommand };

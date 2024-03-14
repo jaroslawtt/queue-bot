@@ -6,12 +6,13 @@ import { type QueueUserCreateData } from '~/packages/queues-users/libs/types/que
 import { type UserCreateData } from '~/packages/users/libs/types/user-create-data.type.js';
 import { type QueueDequeueUserData } from '~/packages/queues/libs/types/queue-dequeue-user-data.type.js';
 import { type UserItemWithTurn } from '~/packages/users/libs/types/user-item-with-turn-type.js';
-import TelegramBot, {
-  ChatType,
-  InlineKeyboardButton,
-} from 'node-telegram-bot-api';
+import { InlineKeyboardButton } from 'node-telegram-bot-api';
 import { type UserItem } from '~/packages/users/libs/types/user-item.type.js';
-import { type UserUpdateNotificationDetailsType } from '~/packages/users/libs/types/user-update-notification-details.type';
+import { type UserUpdateNotificationDetailsType } from '~/packages/users/libs/types/user-update-notification-details.type.js';
+import { type MetaData } from '~/libs/types/meta-data.type.js';
+import { type QueueUpdateData } from '~/packages/queues/libs/types/queue-update-data.type.js';
+import { type MessageCreate } from '~/packages/messages/types/message-create.type.js';
+import { MessageItem } from '~/packages/messages/types/message-item.type';
 
 class AppService {
   private readonly queueService: QueueService;
@@ -89,6 +90,16 @@ class AppService {
     return this.userService.findByQueueId(queueId);
   }
 
+  async findQueuesByChatId(
+    chatId: number,
+    options: {
+      limit?: number;
+      page?: number;
+    },
+  ) {
+    return this.queueService.findByChatId(chatId, options);
+  }
+
   async findUser(userId: number): Promise<UserItem | null> {
     return this.userService.find(userId);
   }
@@ -140,10 +151,20 @@ class AppService {
     });
   }
 
+  async deleteQueue(queueId: number): Promise<void> {
+    return this.queueService.delete(queueId);
+  }
+
   async updateUserNotificationDetails(
     payload: UserUpdateNotificationDetailsType,
   ): Promise<UserItem> {
     return this.userService.updateUserNotificationDetails(payload);
+  }
+
+  async updateQueueData(payload: QueueUpdateData) {
+    return this.queueService.update({
+      ...payload,
+    });
   }
 
   generateQueueListData({
@@ -200,11 +221,9 @@ class AppService {
   generateMessageLink({
     chatId,
     messageId,
-    chatType,
   }: {
     chatId: number;
     messageId: number;
-    chatType: ChatType;
   }): string {
     return `https://t.me/c/${chatId.toString().split('').slice(4).join('')}/${messageId}`;
   }
@@ -221,6 +240,157 @@ class AppService {
     messageLink: string;
   }): string {
     return `<i>${username}</i> has set up a new queue called <b>"${queueTitle}"</b> in the <b>${chatTitle}</b> chat! \nMessage link: ${messageLink}`;
+  }
+
+  generateQueuesListControlPanelData({
+    queues,
+    meta,
+    userId,
+    pageNumber,
+  }: {
+    queues: QueueItem[];
+    meta: MetaData;
+    userId: number;
+    pageNumber: number;
+  }): {
+    template: string;
+    inlineKeyboard: InlineKeyboardButton[][];
+  } {
+    let template = `${meta.totalItems > 0 ? `Active queues: ${meta.totalItems}` : 'Currently, there are no active queues.'}\n`;
+    const inlineKeyboard: InlineKeyboardButton[][] = [];
+
+    for (let i = 0; i < queues.length; i++) {
+      template += `${i + 1}. ${queues[i].name}\n`;
+      inlineKeyboard.push([
+        {
+          text: queues[i].name,
+          callback_data: `queue/${queues[i].id}/${userId}/${pageNumber}`,
+        },
+      ]);
+    }
+
+    const paginationControls: InlineKeyboardButton[] = [];
+
+    if (meta.currentPage < meta.totalPages) {
+      if (meta.currentPage === 1)
+        paginationControls.push({
+          text: '➡️',
+          callback_data: `page/${meta.currentPage + 1}/${userId}`,
+        });
+      if (meta.currentPage > 1) {
+        paginationControls.push({
+          text: '⬅️',
+          callback_data: `page/${meta.currentPage - 1}/${userId}`,
+        });
+        paginationControls.push({
+          text: '➡️',
+          callback_data: `page/${meta.currentPage + 1}/${userId}`,
+        });
+      }
+    }
+    if (meta.currentPage === meta.totalPages) {
+      if (meta.totalPages > 1) {
+        paginationControls.push({
+          text: '⬅️',
+          callback_data: `page/${meta.currentPage - 1}/${userId}`,
+        });
+      }
+    }
+
+    return {
+      template,
+      inlineKeyboard:
+        paginationControls.length > 0
+          ? inlineKeyboard.concat([paginationControls])
+          : inlineKeyboard,
+    };
+  }
+
+  async assignMessageWithQueue(payload: MessageCreate) {
+    return this.queueService.assignMessageWithQueue(payload);
+  }
+
+  async findQueueMessages(queueId: number): Promise<MessageItem[]> {
+    return this.queueService.findQueueMessages(queueId);
+  }
+
+  generateQueueListTemplate({
+    queue,
+    creator,
+    participants,
+  }: {
+    queue: QueueItem;
+    creator: UserItem;
+    participants: UserItemWithTurn[];
+  }): string {
+    const messageLink = this.generateMessageLink({
+      messageId: queue.messageId as number,
+      chatId: queue.chatId,
+    });
+    const createdAtDate = new Date(queue.createdAt);
+    let template = `Name: ${queue.name}\nAuthor: ${creator.telegramTag ? '@' + creator.telegramTag : creator.telegramUsername}\nMessage link: ${messageLink}\nCreated: ${createdAtDate.toLocaleDateString('ru-RU')}\nUpdated: ${new Date().toLocaleDateString('ru-RU')} at ${new Date().toLocaleTimeString('ru-RU')}\n`;
+
+    for (let i = 1; i <= queue.turns; i++) {
+      const participant = participants.find(
+        (participant) => participant.turn === i,
+      );
+
+      if (participant) {
+        const telegramName = `${participant.telegramTag ? '@' + participant.telegramTag : participant.telegramUsername}`;
+        let realName = '';
+
+        if (participant.firstName) realName += `${participant.firstName} `;
+        if (participant.lastName) realName += `${participant.lastName};`;
+
+        template += `${i}. ${realName.length > 0 ? realName : telegramName}\n`;
+      } else template += `${i}.\n`;
+    }
+
+    return template;
+  }
+
+  generateQueueDetailsControlsData({
+    queue,
+    creator,
+    userId,
+    pageNumber,
+  }: {
+    queue: QueueItem;
+    creator: UserItem;
+    userId: number;
+    pageNumber: number;
+  }): {
+    template: string;
+    inlineKeyboard: InlineKeyboardButton[][];
+  } {
+    const messageLink = this.generateMessageLink({
+      messageId: queue.messageId as number,
+      chatId: queue.chatId,
+    });
+    const template = `Name: ${queue.name}\nTurns: ${queue.turns}\nAuthor: ${creator.telegramTag ? '@' + creator.telegramTag : creator.telegramUsername}\nMessage link: ${messageLink}\nCreated: ${new Date(queue.createdAt).toLocaleDateString('ru-RU')}`;
+    const inlineKeyboard: InlineKeyboardButton[][] = [
+      [
+        {
+          text: 'List',
+          callback_data: `list/${queue.id}/${userId}`,
+        },
+        {
+          text: 'Delete',
+          callback_data: `delete/${queue.id}/${userId}`,
+        },
+      ],
+      [
+        {
+          text: 'Back',
+          callback_data: `back/${pageNumber}/${userId}`,
+        },
+      ],
+    ];
+
+    return {
+      template,
+      inlineKeyboard,
+    };
   }
 }
 

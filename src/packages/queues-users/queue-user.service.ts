@@ -5,6 +5,7 @@ import { type QueueUserDeleteData } from '~/packages/queues-users/libs/types/que
 import { type QueueParticipatesRange } from '~/packages/queues/libs/types/queue-participates-range.type.js';
 import { type QueueUserFindData } from '~/packages/queues-users/libs/types/queue-user-find-data.type.js';
 import { type QueueUserItem } from '~/packages/queues-users/libs/types/queue-user-item.type.js';
+import { ApplicationError } from '~/libs/exceptions/exceptions.js';
 
 class QueueUserService {
   private readonly queueUserRepository: QueueUserRepository;
@@ -29,13 +30,13 @@ class QueueUserService {
   async delete(queueUserDeleteData: QueueUserDeleteData) {
     const { queueId, userId } = queueUserDeleteData;
 
-    return void this.queueUserRepository.delete(
-      QueueUserEntity.initialize({
-        queueId,
-        userId,
-        turn: null,
-      }),
-    );
+    const queueUserEntity = QueueUserEntity.initialize({
+      queueId,
+      userId,
+      turn: null,
+    });
+
+    return void this.queueUserRepository.delete(queueUserEntity);
   }
 
   async find(

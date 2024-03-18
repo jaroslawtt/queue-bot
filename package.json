@@ -4,8 +4,9 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "build": "tsc && tsc-alias",
-    "start": "node ./build/index.js",
+    "build": "tsc && tsc-alias && npm run build:copy",
+    "build:copy": "cp -r package.json build",
+    "start": "node ./build/src/index.js",
     "start:dev": "nodemon --exec \"node --loader ts-paths-esm-loader\" src/index.ts",
     "prettify": "prettier --write \"**/*.{ts,json,md}\"",
     "migrate:dev": "node --loader ts-paths-esm-loader ./node_modules/knex/bin/cli.js migrate:latest",
